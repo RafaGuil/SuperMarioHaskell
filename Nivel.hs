@@ -32,5 +32,8 @@ contarSiCumple :: (a -> Bool) -> [a] -> Int
 contarSiCumple condicion xs = length [x | x <- xs, condicion x]
 
 
--- Convierte una lista de al menos dos números en un Vector2
---list2Vector2 :: [Double] -> Vector2
+-- Función: list2Vector2. Convierte una lista de dos (o más) números en un vector/punto 2D; lanza un error si la lista no tiene al menos dos elementos.
+list2Vector2 :: [Double] -> Vector2
+list2Vector2 [_]     = error "Falta un elemento en la lista para convertir en Vector2"
+list2Vector2 []      = error "Lista vacia no posible convertir en Vector2"
+list2Vector2 (x:y:_) = (x, y)
