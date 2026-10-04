@@ -27,8 +27,9 @@ esBlanco '\t' = True
 esBlanco '\n' = True
 esBlanco _  = False
 
--- Cuenta cuántos elementos de una lista cumplen una condición
---contarSiCumple :: (a -> Bool) -> [a] -> Int
+-- Función: contarSiCumple. Cuenta cuántos elementos de una lista cumplen una condición dada.
+contarSiCumple :: (a -> Bool) -> [a] -> Int
+contarSiCumple condicion xs = length [x | x <- xs, condicion x]
 
 
 -- Convierte una lista de al menos dos números en un Vector2
