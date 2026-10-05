@@ -172,7 +172,6 @@ posicionesMeta grid =
 -- ---------------------------------------------------------------------
 -- 6. Bonus: propiedades con QuickCheck                (hasta +1 punto)
 -- ---------------------------------------------------------------------
--- Autor: José Manuel Mesonero
 -- Criterio general para elegir las propiedades:
 --   * Que digan algo del juego (movimiento, colisiones, lectura del
 --     nivel), no propiedades matemáticas porque sí.
