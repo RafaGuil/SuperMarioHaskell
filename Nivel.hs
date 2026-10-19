@@ -336,7 +336,6 @@ posicionesMetaRecAux xx@(x:xs) ac
         where
             columnaRec (c:cs) acum = if esMeta c then acum else columnaRec cs (acum+1)
 
-
 -- Función: posicionesEnemigosRec. Análoga a posicionesMetaRec, para las posiciones e identficadores de los enemigos.
 posicionesEnemigosRec :: Grid -> [(Int,Int,String)]
 posicionesEnemigosRec grid = posicionesEnemigosRecAux grid 0
@@ -350,3 +349,16 @@ posicionesEnemigosRecAux xx@(x:xs) ac
         where
             columnaRec (c:cs) acum = if esEnemigo c then acum else columnaRec cs (acum+1)
             elemRec (c:cs) = if esEnemigo c then c else elemRec cs
+
+
+-- Ej2. Generalización por recursión de agruparRachas
+-- Función: agruparPorCaracter. Recorre una fila y agrupa en tríos (columna de inicio, longitud, carácter) las rachas de caracteres consecutivos iguales.
+agruparPorCaracter :: String -> [(Int,Int,Char)]
+agruparPorCaracter s = agruparPorCaracterAux s 0 0 0
+
+agruparPorCaracterAux :: String -> Int -> Int -> Int -> [(Int,Int,Char)]
+agruparPorCaracterAux "" _ _ _ = []
+agruparPorCaracterAux xx@(x:xs) i aci ac
+    | x == ' ' = []
+    | not (null xs) && x == head xs = agruparPorCaracterAux xs (i+1) aci (ac+1)
+    | otherwise = [(aci, ac+1, x)] ++ agruparPorCaracterAux xs (i+1) (i+1) 0
