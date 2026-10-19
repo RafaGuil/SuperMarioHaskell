@@ -335,3 +335,18 @@ posicionesMetaRecAux xx@(x:xs) ac
     | otherwise = posicionesMetaRecAux xs (ac+1)
         where
             columnaRec (c:cs) acum = if esMeta c then acum else columnaRec cs (acum+1)
+
+
+-- Función: posicionesEnemigosRec. Análoga a posicionesMetaRec, para las posiciones e identficadores de los enemigos.
+posicionesEnemigosRec :: Grid -> [(Int,Int,String)]
+posicionesEnemigosRec grid = posicionesEnemigosRecAux grid 0
+
+posicionesEnemigosRecAux :: Grid -> Int -> [(Int,Int,String)]
+posicionesEnemigosRecAux [] _ = []
+posicionesEnemigosRecAux xx@(x:xs) ac
+    | x == "" = []
+    | any esEnemigo x = [(ac, columnaRec x 0, [elemRec x])] ++ posicionesEnemigosRecAux xs (ac+1)
+    | otherwise = posicionesEnemigosRecAux xs (ac+1)
+        where
+            columnaRec (c:cs) acum = if esEnemigo c then acum else columnaRec cs (acum+1)
+            elemRec (c:cs) = if esEnemigo c then c else elemRec cs
