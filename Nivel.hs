@@ -316,3 +316,22 @@ prop_suma_asociativa a b c = sumaVectores (sumaVectores a b) c == sumaVectores a
 -- contraejemplo); con Int sí se cumpliría.
 -- Conclusión para el juego: las posiciones no se deben comparar con ==,
 -- sino con un margen de tolerancia.
+
+
+-- ================================================== TAREA 2 ==============================================
+
+-- Bloque 1: Recursión
+-- Ej1. Reimplementación recursiva de las consultas del nivel
+-- Función: posicionesMetaRec. Dado el nivel completo, devuelve la lista de posiciones (fila, columna) en las que aparece la
+-- meta. Mismo resultado que posicionesMeta de la Tarea 1, pero implementado con recursión explícita en vez de comprensión.
+posicionesMetaRec :: Grid -> [(Int, Int)]
+posicionesMetaRec grid = posicionesMetaRecAux grid 0
+
+posicionesMetaRecAux :: Grid -> Int -> [(Int, Int)]
+posicionesMetaRecAux [] _ = []
+posicionesMetaRecAux xx@(x:xs) ac
+    | xx == [""] = []
+    | any esMeta x = [(ac,columnaRec x 0)]
+    | otherwise = posicionesMetaRecAux xs (ac+1)
+        where
+            columnaRec (c:cs) acum = if esMeta c then acum else columnaRec cs (acum+1)
