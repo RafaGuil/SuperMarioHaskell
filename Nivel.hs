@@ -314,3 +314,33 @@ prop_suma_asociativa a b c = sumaVectores (sumaVectores a b) c == sumaVectores a
 -- contraejemplo); con Int sí se cumpliría.
 -- Conclusión para el juego: las posiciones no se deben comparar con ==,
 -- sino con un margen de tolerancia.
+
+
+-- ---------------------------------------------------------------------
+-- TAREA 2 - Subtarea 7: contarCeldasQueCumplen (con foldl)
+-- ---------------------------------------------------------------------
+
+
+-- contarEnFila p fila = foldl (\acc c -> if p c then acc + 1 else acc) 0 fila
+-- acc es el acumulador y c es una letra, la celda
+-- no se puede usar lambda asi que la parte de lambda se escribe en un where
+contarEnFila :: (Celda -> Bool) -> String -> Int
+contarEnFila p fila = foldl paso 0 fila
+    where
+        paso acc c = if p c then acc + 1 else acc
+
+{-
+Un nivel entero tiene varias filas una encima de otra, contarEnFila solo suma una fila
+y contarCeldasQueCumplen llama a contarEnFila para sumar todo el nivel completo
+-}
+
+contarCeldasQueCumplen :: (Celda -> Bool) -> Grid -> Int
+contarCeldasQueCumplen p grid = foldl sumarFila 0 grid
+    where
+        sumarFila acc fila = acc + contarEnFila p fila
+
+{-
+ContarCeldasQueCumplen es igual que la auxiliar per se le pasa el Grid complto
+y sumarFila es lo que llevo ya sumado mas la fila entera
+-}
+
