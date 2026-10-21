@@ -323,16 +323,19 @@ prop_suma_asociativa a b c = sumaVectores (sumaVectores a b) c == sumaVectores a
 
 -- Subtarea 3: Simulación de movimiento
 -- Función auxiliar calculaPaso:
+-- Calcula un nuevo estado sumando la velocidad a la posición actual y la gravedad a la velocidad
 calculaPaso :: Double -> (Double,Double) ->(Double, Double)
 calculaPaso gravedad (pos,vel) = (pos + vel, vel + gravedad)
 
 -- Función simularCaidaLibre:
+-- Establecemos el caso base y hacemos el caso genérico garantizando n+1 elementos
 simularCaidaLibre :: Int -> Double -> (Double, Double) -> [(Double, Double)]
 simularCaidaLibre 0 _ estado = [estado]
 simularCaidaLibre pasos gravedad estado = estado : simularCaidaLibre (pasos - 1) gravedad (calculaPaso gravedad estado)
 
 
 -- Subtarea 4: Recursión sobre dos listas a la vez
+-- Empareja las cabezas de cada lista de manera recursiva, en el momento que haya alguna lista vacía se detiene.
 zipPropio:: [a] -> [b] -> [(a,b)]
 zipPropio [] _ = []
 zipPropio _ [] = []
@@ -340,13 +343,14 @@ zipPropio (x:xs) (y:ys) = (x,y) : zipPropio xs ys
 
 -- Subtarea 5: Recursión con descarte condicional
 -- Función auxiliar: esComentarioOVacia
+-- Evalúa si una cadena está vacía o si su primer caracter es un comentario
 esComentarioOVacia :: String -> Bool
 esComentarioOVacia "" = True
-esComentarioOVacia [] = True
 esComentarioOVacia (';':_) = True
 esComentarioOVacia _ = False
 
 -- Función prepararLineas:
+-- Aplica trim para hacer una limpieza y filtra las listas que recibe como entrada.
 prepararLineas :: [String] -> [String]
 prepararLineas [] = []
 prepararLineas (linea:resto) 
