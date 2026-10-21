@@ -1,3 +1,4 @@
+
 module Nivel where
 
 import Test.QuickCheck
@@ -425,3 +426,37 @@ filterPropio p (x:xs)
 foldrPropio :: (a -> b -> b) -> b -> [a] -> b
 foldrPropio _ v [] = v                         -- Caso base: al llegar al final (lista vacía), devuelve el valor acumulado 'v'
 foldrPropio f v (x:xs) = f x (foldrPropio f v xs)  -- Caso recursivo: procesa primero la cola 'xs' y combina 'x' con ese resultado
+
+-- ---------------------------------------------------------------------
+-- TAREA 2 - Subtarea 6: foldlPropio (sin foldr/foldl)
+-- ---------------------------------------------------------------------
+
+-- (b -> a -> b) funcion que decide que operacion hace foldl
+-- b el valor inicial/ acumulador
+-- [a] la lista que se le aplica la funcion
+
+
+foldlPropio :: (b -> a -> b) -> b -> [a] -> b
+foldlPropio f v [] = v
+foldlPropio f v (x:xs) = foldlPropio f (f v x) xs 
+
+
+-- ---------------------------------------------------------------------
+-- TAREA 2 - Subtarea 7: hayColisionConAlguna (con foldr)
+-- ---------------------------------------------------------------------
+
+-- Caja representa a Mario
+-- [Caja] representa todos los obstaculos
+-- Bool devuelve True/False si colisiona con ALGUN obstaculo
+-- funcion solapan ya nos dice si colisiona
+
+{-
+    JUSTIFICACION: Usamos foldr porque nos interesa parar en cuanto el jugador Mario choque con un obstaculo.
+    Con (||) si el lado izquierdo es True, lo que venga despues que seria el resto no se va a calcular,
+    sin embargo si se usa foldl habría que recorrer siempre la lista entera aunque chocase con el primer obstaculo
+-}
+
+hayColisionConAlguna :: Caja -> [Caja] -> Bool
+hayColisionConAlguna jugador obstaculos = foldr paso False obstaculos
+    where
+        paso caja resto = solapan jugador caja || resto
