@@ -319,7 +319,6 @@ prop_suma_asociativa a b c = sumaVectores (sumaVectores a b) c == sumaVectores a
 
 
 
-
 -- ================================================== TAREA 2 ==============================================
 
 -- Bloque 1: Recursión
@@ -460,3 +459,60 @@ hayColisionConAlguna :: Caja -> [Caja] -> Bool
 hayColisionConAlguna jugador obstaculos = foldr paso False obstaculos
     where
         paso caja resto = solapan jugador caja || resto
+        
+        
+--Subtarea 7
+
+--Contar celdas que cumplen
+
+-- Cuenta cuántas celdas del nivel cumplen una condición.
+-- Uso foldl porque es una acumulación numérica: recorre la lista de izquierda a derecha
+-- llevando un contador, y no necesita preservar estructura ni cortocircuitar (foldr sería
+-- más natural al construir listas o al parar antes, como en hayColisionConAlguna).
+contarCeldasQueCumplen :: (Celda -> Bool) -> Grid -> Int
+contarCeldasQueCumplen condicion nivel = foldl sumaFila 0 nivel
+  where
+    -- Suma al total las celdas que cumplen la condición en una fila
+    sumaFila :: Int -> String -> Int
+    sumaFila acumulado fila = acumulado + contarEnFila fila
+
+    -- Cuenta cuántas celdas de una fila cumplen la condición
+    contarEnFila :: String -> Int
+    contarEnFila fila = foldl cuentaCelda 0 fila
+
+    -- Suma 1 al contador si la celda cumple la condición
+    cuentaCelda :: Int -> Celda -> Int
+    cuentaCelda acumulado celda
+      | condicion celda = acumulado + 1
+      | otherwise       = acumulado
+
+      
+--Bonus: Propiedades con QuickCheck
+
+-- mapPropio da lo mismo que map
+prop_mapPropio_equivale_map :: [Int] -> Bool
+prop_mapPropio_equivale_map xs = mapPropio (+1) xs == map (+1) xs
+
+-- filterPropio da lo mismo que filter
+prop_filterPropio_equivale_filter :: [Int] -> Bool
+prop_filterPropio_equivale_filter xs = filterPropio even xs == filter even xs
+
+-- foldrPropio da lo mismo que foldr (con (-) se nota si el orden es distinto)
+prop_foldrPropio_equivale_foldr :: [Int] -> Bool
+prop_foldrPropio_equivale_foldr xs = foldrPropio (-) 0 xs == foldr (-) 0 xs
+
+-- foldlPropio da lo mismo que foldl
+prop_foldlPropio_equivale_foldl :: [Int] -> Bool
+prop_foldlPropio_equivale_foldl xs = foldlPropio (-) 0 xs == foldl (-) 0 xs
+
+-- zipPropio da lo mismo que zip
+prop_zipPropio_equivale_zip :: [Int] -> [Char] -> Bool
+prop_zipPropio_equivale_zip xs ys = zipPropio xs ys == zip xs ys
+
+-- simularCaidaLibre devuelve siempre n + 1 estados (propiedad condicional, n >= 0)
+prop_simularCaidaLibre_longitud :: Int -> Property
+prop_simularCaidaLibre_longitud n = n >= 0 ==> length (simularCaidaLibre n (-1) (0,0)) == n + 1
+
+-- Nunca hay colisión contra una lista vacía de obstáculos
+prop_hayColisionConAlguna_lista_vacia :: Caja -> Bool
+prop_hayColisionConAlguna_lista_vacia caja = not (hayColisionConAlguna caja [])
