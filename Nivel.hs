@@ -332,10 +332,11 @@ posicionesMetaRecAux :: Grid -> Int -> [(Int, Int)]
 posicionesMetaRecAux [] _ = []
 posicionesMetaRecAux xx@(x:xs) ac
     | xx == [""] = []
-    | any esMeta x = [(ac,columnaRec x 0)]
+    | any esMeta x = columnaRec x 0 ++ posicionesMetaRecAux xs (ac+1)
     | otherwise = posicionesMetaRecAux xs (ac+1)
         where
-            columnaRec (c:cs) acum = if esMeta c then acum else columnaRec cs (acum+1)
+            columnaRec [] _ = []
+            columnaRec (c:cs) acum = if esMeta c then (ac,acum) : columnaRec cs (acum+1) else columnaRec cs (acum+1)
 
 -- Función: posicionesEnemigosRec. Análoga a posicionesMetaRec, para las posiciones e identficadores de los enemigos.
 posicionesEnemigosRec :: Grid -> [(Int,Int,String)]
@@ -344,12 +345,11 @@ posicionesEnemigosRec grid = posicionesEnemigosRecAux grid 0
 posicionesEnemigosRecAux :: Grid -> Int -> [(Int,Int,String)]
 posicionesEnemigosRecAux [] _ = []
 posicionesEnemigosRecAux xx@(x:xs) ac
-    | x == "" = []
-    | any esEnemigo x = [(ac, columnaRec x 0, [elemRec x])] ++ posicionesEnemigosRecAux xs (ac+1)
+    | any esEnemigo x = columnaRec x 0 ++ posicionesEnemigosRecAux xs (ac+1)
     | otherwise = posicionesEnemigosRecAux xs (ac+1)
         where
-            columnaRec (c:cs) acum = if esEnemigo c then acum else columnaRec cs (acum+1)
-            elemRec (c:cs) = if esEnemigo c then c else elemRec cs
+            columnaRec [] _ = []
+            columnaRec (c:cs) acum = if esEnemigo c then (ac, acum, [c]) : columnaRec cs (acum+1) else columnaRec cs (acum+1)
 
 
 -- Ej2. Generalización por recursión de agruparRachas
