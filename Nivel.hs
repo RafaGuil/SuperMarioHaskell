@@ -314,3 +314,24 @@ prop_suma_asociativa a b c = sumaVectores (sumaVectores a b) c == sumaVectores a
 -- contraejemplo); con Int sí se cumpliría.
 -- Conclusión para el juego: las posiciones no se deben comparar con ==,
 -- sino con un margen de tolerancia.
+
+
+-- SUBTAREA 5: mapPropio y filterPropio (Bloque 2 - Orden Superior)
+-- Recibe una función transformadora (a -> b) y una lista [a], devolviendo la lista transformada [b]
+mapPropio :: (a -> b) -> [a] -> [b]
+mapPropio _ [] = []                    -- Caso base: si la lista está vacía, no hay nada que transformar
+mapPropio f (x:xs) = f x : mapPropio f xs  -- Caso recursivo: aplica 'f' a la cabeza 'x' y la une (:) con el resto procesado
+
+-- Recibe un predicado/condición (a -> Bool) y una lista [a], devolviendo los elementos que devuelven True
+filterPropio :: (a -> Bool) -> [a] -> [a]
+filterPropio _ [] = []                 -- Caso base: la lista vacía filtrada sigue siendo la lista vacía
+filterPropio p (x:xs)
+    | p x       = x : filterPropio p xs    -- Si la cabeza 'x' cumple la condición (p x == True), la conserva y sigue con 'xs'
+    | otherwise = filterPropio p xs        -- Si no la cumple, descarta 'x' y continúa procesando la cola 'xs'
+
+
+-- SUBTAREA 6: foldrPropio (Bloque 2 - Orden Superior)
+-- Plega la lista de derecha a izquierda asociando la función 'f' con un valor inicial/acumulador 'v'
+foldrPropio :: (a -> b -> b) -> b -> [a] -> b
+foldrPropio _ v [] = v                         -- Caso base: al llegar al final (lista vacía), devuelve el valor acumulado 'v'
+foldrPropio f v (x:xs) = f x (foldrPropio f v xs)  -- Caso recursivo: procesa primero la cola 'xs' y combina 'x' con ese resultado
