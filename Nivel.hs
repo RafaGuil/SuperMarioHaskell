@@ -326,29 +326,22 @@ prop_suma_asociativa a b c = sumaVectores (sumaVectores a b) c == sumaVectores a
 -- Uso foldl porque es una acumulación numérica: recorre la lista de izquierda a derecha
 -- llevando un contador, y no necesita preservar estructura ni cortocircuitar (foldr sería
 -- más natural al construir listas o al parar antes, como en hayColisionConAlguna).
-
-contarCeldasQueCumplen :: (Celda -> Bool) -> Nivel -> Int
--- condicion: función que dice si una celda se cuenta (por ejemplo esSolido)
--- nivel: lista de filas; el resultado es el total de celdas que cumplen la condición
+contarCeldasQueCumplen :: (Celda -> Bool) -> Grid -> Int
 contarCeldasQueCumplen condicion nivel = foldl sumaFila 0 nivel
-  -- Recorre las filas del nivel con un total que empieza en 0, aplicando sumaFila a cada una
   where
-    -- Suma al total acumulado las celdas que cumplen la condición en una fila
-    sumaFila :: Int -> Fila -> Int
+    -- Suma al total las celdas que cumplen la condición en una fila
+    sumaFila :: Int -> String -> Int
     sumaFila acumulado fila = acumulado + contarEnFila fila
-    -- acumulado: lo contado en las filas anteriores; fila: la fila que toca mirar
 
-    -- Cuenta cuántas celdas de una sola fila cumplen la condición
-    contarEnFila :: Fila -> Int
+    -- Cuenta cuántas celdas de una fila cumplen la condición
+    contarEnFila :: String -> Int
     contarEnFila fila = foldl cuentaCelda 0 fila
-    -- Recorre las celdas de la fila con un contador que empieza en 0, aplicando cuentaCelda
 
-    -- Decide, para una celda, si el contador sube 1 o se queda igual
+    -- Suma 1 al contador si la celda cumple la condición
     cuentaCelda :: Int -> Celda -> Int
     cuentaCelda acumulado celda
-      | condicion celda = acumulado + 1   -- la celda cumple la condición: suma 1
-      | otherwise       = acumulado       -- no cumple: el contador no cambia
-
+      | condicion celda = acumulado + 1
+      | otherwise       = acumulado
 
 
 --Bonus: Propiedades con QuickCheck
