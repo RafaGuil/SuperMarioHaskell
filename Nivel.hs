@@ -92,7 +92,9 @@ ladoColision (x1,y1,w1,h1) (x2,y2,w2,h2)
 -- Función: splitOn. Divide una cadena en trozos cada vez que aparece un carácter separador dado.
 -- DISCLAIMER: Al testearlo, cuidado con copiar y pegar del pdf que se copian mal las comillas del Char, poner esto: ''
 splitOn :: Char -> String -> [String]
-splitOn separador cadena = lines ([if c == separador then '\n' else c | c <- cadena])
+splitOn separador cadena
+    | notElem separador cadena = [cadena]
+    | otherwise = lines ([if c == separador then '\n' else c | c <- cadena])
 
 
 -- Función: trim. Elimina los espacios en blanco (espacios, tabuladores, saltos de línea) al principio y al final de una cadena.
@@ -316,11 +318,54 @@ prop_suma_asociativa a b c = sumaVectores (sumaVectores a b) c == sumaVectores a
 -- sino con un margen de tolerancia.
 
 
--- ================== Tarea 2 ================== --
 
 
--- BLOQUE 1:
+-- ================================================== TAREA 2 ==============================================
 
+-- Bloque 1: Recursión
+-- Ej1. Reimplementación recursiva de las consultas del nivel
+-- Función: posicionesMetaRec. Dado el nivel completo, devuelve la lista de posiciones (fila, columna) en las que aparece la
+-- meta. Mismo resultado que posicionesMeta de la Tarea 1, pero implementado con recursión explícita en vez de comprensión.
+posicionesMetaRec :: Grid -> [(Int, Int)]
+posicionesMetaRec grid = posicionesMetaRecAux grid 0
+
+posicionesMetaRecAux :: Grid -> Int -> [(Int, Int)]
+posicionesMetaRecAux [] _ = []
+posicionesMetaRecAux xx@(x:xs) ac
+    | xx == [""] = []
+    | any esMeta x = [(ac,columnaRec x 0)]
+    | otherwise = posicionesMetaRecAux xs (ac+1)
+        where
+            columnaRec (c:cs) acum = if esMeta c then acum else columnaRec cs (acum+1)
+
+-- Función: posicionesEnemigosRec. Análoga a posicionesMetaRec, para las posiciones e identficadores de los enemigos.
+posicionesEnemigosRec :: Grid -> [(Int,Int,String)]
+posicionesEnemigosRec grid = posicionesEnemigosRecAux grid 0
+
+posicionesEnemigosRecAux :: Grid -> Int -> [(Int,Int,String)]
+posicionesEnemigosRecAux [] _ = []
+posicionesEnemigosRecAux xx@(x:xs) ac
+    | x == "" = []
+    | any esEnemigo x = [(ac, columnaRec x 0, [elemRec x])] ++ posicionesEnemigosRecAux xs (ac+1)
+    | otherwise = posicionesEnemigosRecAux xs (ac+1)
+        where
+            columnaRec (c:cs) acum = if esEnemigo c then acum else columnaRec cs (acum+1)
+            elemRec (c:cs) = if esEnemigo c then c else elemRec cs
+
+
+-- Ej2. Generalización por recursión de agruparRachas
+-- Función: agruparPorCaracter. Recorre una fila y agrupa en tríos (columna de inicio, longitud, carácter) las rachas de caracteres consecutivos iguales.
+agruparPorCaracter :: String -> [(Int,Int,Char)]
+agruparPorCaracter s = agruparPorCaracterAux s 0 0 0
+
+agruparPorCaracterAux :: String -> Int -> Int -> Int -> [(Int,Int,Char)]
+agruparPorCaracterAux "" _ _ _ = []
+agruparPorCaracterAux xx@(x:xs) i aci ac
+    | x == ' ' = []
+    | not (null xs) && x == head xs = agruparPorCaracterAux xs (i+1) aci (ac+1)
+    | otherwise = [(aci, ac+1, x)] ++ agruparPorCaracterAux xs (i+1) (i+1) 0
+    
+    
 -- Subtarea 3: Simulación de movimiento
 -- Función auxiliar calculaPaso:
 -- Calcula un nuevo estado sumando la velocidad a la posición actual y la gravedad a la velocidad
@@ -359,11 +404,3 @@ prepararLineas (linea:resto)
 
     where 
         lineaLimpia = trim linea
-
-
-
-
-
-
-
-
