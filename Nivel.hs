@@ -1,7 +1,7 @@
 
 module Nivel where
 
--- import Test.QuickCheck
+import Test.QuickCheck
 
 
 -- Tarea 1
@@ -289,8 +289,8 @@ prop_trim_idempotente s = trim (trim s) == trim s
 -- Uso ==> (y por eso devuelve Property) para descartar los casos en que
 -- sep sí aparece en s, porque ahí la propiedad no tiene que cumplirse.
 -- Incluye la cadena vacía: splitOn ',' "" debe dar [""] y no [].
--- prop_splitOn_sin_separador :: Char -> String -> Property
--- prop_splitOn_sin_separador sep s = not (elem sep s) ==> splitOn sep s == [s]
+prop_splitOn_sin_separador :: Char -> String -> Property
+prop_splitOn_sin_separador sep s = not (elem sep s) ==> splitOn sep s == [s]
 -- ghci> quickCheck prop_splitOn_sin_separador
 -- *** Failed! Falsified (after 1 test and 1 shrink):
 -- 'a'
