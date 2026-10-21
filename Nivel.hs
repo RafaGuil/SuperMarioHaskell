@@ -8,7 +8,6 @@ import Test.QuickCheck
 
 -- Ejercicios 1,2,3
 
-
 -- Declaraciones de tipo
 
 -- Punto o Vector 2D
@@ -16,6 +15,12 @@ type Vector2 = (Double,Double)
 
 -- Cajas de colision
 type Caja = (Double,Double,Double,Double)
+
+-- Tarea 5
+-- Declaraciones de tipo
+-- Hemos creado un alias de tipos para que el código sea más legible y sepamos qué representa cada cosa.
+type Celda = Char     -- Cada casilla del nivel es un carácter individual ('#', 'M', '.', 'X'...)
+type Grid  = [String] -- El mapa completo es una lista de filas de texto (matriz 2D de caracteres)
 
 --Lado de colision
 data Lado = Arriba | Abajo | Izquierda | Derecha
@@ -87,7 +92,9 @@ ladoColision (x1,y1,w1,h1) (x2,y2,w2,h2)
 -- Función: splitOn. Divide una cadena en trozos cada vez que aparece un carácter separador dado.
 -- DISCLAIMER: Al testearlo, cuidado con copiar y pegar del pdf que se copian mal las comillas del Char, poner esto: ''
 splitOn :: Char -> String -> [String]
-splitOn separador cadena = lines ([if c == separador then '\n' else c | c <- cadena])
+splitOn separador cadena
+    | notElem separador cadena = [cadena]
+    | otherwise = lines ([if c == separador then '\n' else c | c <- cadena])
 
 
 -- Función: trim. Elimina los espacios en blanco (espacios, tabuladores, saltos de línea) al principio y al final de una cadena.
@@ -120,18 +127,13 @@ list2Vector2 (x:y:_) = (x, y)
 -- SUBTAREA 5: PARSEO DEL NIVEL
 --------------------------------------------------------------------------------
 
--- APARTADO 1: Tipos sinónimo
--- Hemos creado un alias de tipos para que el código sea más legible y sepamos qué representa cada cosa.
-type Celda = Char     -- Cada casilla del nivel es un carácter individual ('#', 'M', '.', 'X'...)
-type Grid  = [String] -- El mapa completo es una lista de filas de texto (matriz 2D de caracteres)
-
--- APARTADO 2: Parseo del nivel
+-- APARTADO 1: Parseo del nivel
 -- Convierte la lista de líneas leídas del archivo de texto en nuestro tipo Grid.
 -- Como Grid ya está definido como [String], devolvemos las líneas tal cual.
 parsearNivel :: [String] -> Grid
 parsearNivel lineas = lineas
 
--- APARTADO 3: Funciones de clasificación con Pattern Matching
+-- APARTADO 2: Funciones de clasificación con Pattern Matching
 -- Hemos usado coincidencia de patrones sobre el carácter para saber qué hay en la celda:
 -- La primera línea comprueba el carácter concreto y la segunda (_) captura cualquier otro.
 
@@ -150,13 +152,13 @@ esVacio :: Celda -> Bool
 esVacio '.' = True -- Si es '.', la casilla esta vacia 
 esVacio _ = False -- Para el resto devuelve False
 
--- APARTADO 4: Detección de enemigos (reutilizando funciones anteriores)
+-- APARTADO 3: Detección de enemigos (reutilizando funciones anteriores)
 -- Un enemigo es cualquier carácter que no sea pared ('#'), ni meta ('M'), ni suelo vacío ('.').
 -- Reutilizamos las tres funciones anteriores para no repetir lógica.
 esEnemigo :: Celda -> Bool
 esEnemigo c = not (esSolido c || esMeta c || esVacio c)
 
--- APARTADO 5: Búsqueda de posiciones con listas por comprensión anidadas
+-- APARTADO 4: Búsqueda de posiciones con listas por comprensión anidadas
 
 -- Devuelve las coordenadas (fila, columna) donde aparece la meta 'M'.
 -- 1. zip [0..] grid asigna a cada fila su número de índice 'f' -> (0, "fila0"), (1, "fila1")...
@@ -316,6 +318,115 @@ prop_suma_asociativa a b c = sumaVectores (sumaVectores a b) c == sumaVectores a
 -- sino con un margen de tolerancia.
 
 
+
+
+-- ================================================== TAREA 2 ==============================================
+
+-- Bloque 1: Recursión
+-- Ej1. Reimplementación recursiva de las consultas del nivel
+-- Función: posicionesMetaRec. Dado el nivel completo, devuelve la lista de posiciones (fila, columna) en las que aparece la
+-- meta. Mismo resultado que posicionesMeta de la Tarea 1, pero implementado con recursión explícita en vez de comprensión.
+posicionesMetaRec :: Grid -> [(Int, Int)]
+posicionesMetaRec grid = posicionesMetaRecAux grid 0
+
+posicionesMetaRecAux :: Grid -> Int -> [(Int, Int)]
+posicionesMetaRecAux [] _ = []
+posicionesMetaRecAux xx@(x:xs) ac
+    | xx == [""] = []
+    | any esMeta x = [(ac,columnaRec x 0)]
+    | otherwise = posicionesMetaRecAux xs (ac+1)
+        where
+            columnaRec (c:cs) acum = if esMeta c then acum else columnaRec cs (acum+1)
+
+-- Función: posicionesEnemigosRec. Análoga a posicionesMetaRec, para las posiciones e identficadores de los enemigos.
+posicionesEnemigosRec :: Grid -> [(Int,Int,String)]
+posicionesEnemigosRec grid = posicionesEnemigosRecAux grid 0
+
+posicionesEnemigosRecAux :: Grid -> Int -> [(Int,Int,String)]
+posicionesEnemigosRecAux [] _ = []
+posicionesEnemigosRecAux xx@(x:xs) ac
+    | x == "" = []
+    | any esEnemigo x = [(ac, columnaRec x 0, [elemRec x])] ++ posicionesEnemigosRecAux xs (ac+1)
+    | otherwise = posicionesEnemigosRecAux xs (ac+1)
+        where
+            columnaRec (c:cs) acum = if esEnemigo c then acum else columnaRec cs (acum+1)
+            elemRec (c:cs) = if esEnemigo c then c else elemRec cs
+
+
+-- Ej2. Generalización por recursión de agruparRachas
+-- Función: agruparPorCaracter. Recorre una fila y agrupa en tríos (columna de inicio, longitud, carácter) las rachas de caracteres consecutivos iguales.
+agruparPorCaracter :: String -> [(Int,Int,Char)]
+agruparPorCaracter s = agruparPorCaracterAux s 0 0 0
+
+agruparPorCaracterAux :: String -> Int -> Int -> Int -> [(Int,Int,Char)]
+agruparPorCaracterAux "" _ _ _ = []
+agruparPorCaracterAux xx@(x:xs) i aci ac
+    | x == ' ' = []
+    | not (null xs) && x == head xs = agruparPorCaracterAux xs (i+1) aci (ac+1)
+    | otherwise = [(aci, ac+1, x)] ++ agruparPorCaracterAux xs (i+1) (i+1) 0
+    
+    
+-- Subtarea 3: Simulación de movimiento
+-- Función auxiliar calculaPaso:
+-- Calcula un nuevo estado sumando la velocidad a la posición actual y la gravedad a la velocidad
+calculaPaso :: Double -> (Double,Double) ->(Double, Double)
+calculaPaso gravedad (pos,vel) = (pos + vel, vel + gravedad)
+
+-- Función simularCaidaLibre:
+-- Establecemos el caso base y hacemos el caso genérico garantizando n+1 elementos
+simularCaidaLibre :: Int -> Double -> (Double, Double) -> [(Double, Double)]
+simularCaidaLibre 0 _ estado = [estado]
+simularCaidaLibre pasos gravedad estado = estado : simularCaidaLibre (pasos - 1) gravedad (calculaPaso gravedad estado)
+
+
+-- Subtarea 4: Recursión sobre dos listas a la vez
+-- Empareja las cabezas de cada lista de manera recursiva, en el momento que haya alguna lista vacía se detiene.
+zipPropio:: [a] -> [b] -> [(a,b)]
+zipPropio [] _ = []
+zipPropio _ [] = []
+zipPropio (x:xs) (y:ys) = (x,y) : zipPropio xs ys
+
+-- Subtarea 5: Recursión con descarte condicional
+-- Función auxiliar: esComentarioOVacia
+-- Evalúa si una cadena está vacía o si su primer caracter es un comentario
+esComentarioOVacia :: String -> Bool
+esComentarioOVacia "" = True
+esComentarioOVacia (';':_) = True
+esComentarioOVacia _ = False
+
+-- Función prepararLineas:
+-- Aplica trim para hacer una limpieza y filtra las listas que recibe como entrada.
+prepararLineas :: [String] -> [String]
+prepararLineas [] = []
+prepararLineas (linea:resto) 
+    | esComentarioOVacia lineaLimpia = prepararLineas resto
+    | otherwise = lineaLimpia : prepararLineas resto
+
+    where 
+        lineaLimpia = trim linea
+        
+        
+-- Bloque 2: Funciones de orden superior
+-- SUBTAREA 5: mapPropio y filterPropio (Bloque 2 - Orden Superior)
+-- Recibe una función transformadora (a -> b) y una lista [a], devolviendo la lista transformada [b]
+mapPropio :: (a -> b) -> [a] -> [b]
+mapPropio _ [] = []                    -- Caso base: si la lista está vacía, no hay nada que transformar
+mapPropio f (x:xs) = f x : mapPropio f xs  -- Caso recursivo: aplica 'f' a la cabeza 'x' y la une (:) con el resto procesado
+
+-- Recibe un predicado/condición (a -> Bool) y una lista [a], devolviendo los elementos que devuelven True
+filterPropio :: (a -> Bool) -> [a] -> [a]
+filterPropio _ [] = []                 -- Caso base: la lista vacía filtrada sigue siendo la lista vacía
+filterPropio p (x:xs)
+    | p x       = x : filterPropio p xs    -- Si la cabeza 'x' cumple la condición (p x == True), la conserva y sigue con 'xs'
+    | otherwise = filterPropio p xs        -- Si no la cumple, descarta 'x' y continúa procesando la cola 'xs'
+
+
+-- SUBTAREA 6: foldrPropio (Bloque 2 - Orden Superior)
+-- Plega la lista de derecha a izquierda asociando la función 'f' con un valor inicial/acumulador 'v'
+foldrPropio :: (a -> b -> b) -> b -> [a] -> b
+foldrPropio _ v [] = v                         -- Caso base: al llegar al final (lista vacía), devuelve el valor acumulado 'v'
+foldrPropio f v (x:xs) = f x (foldrPropio f v xs)  -- Caso recursivo: procesa primero la cola 'xs' y combina 'x' con ese resultado
+
 -- ---------------------------------------------------------------------
 -- TAREA 2 - Subtarea 6: foldlPropio (sin foldr/foldl)
 -- ---------------------------------------------------------------------
@@ -349,4 +460,3 @@ hayColisionConAlguna :: Caja -> [Caja] -> Bool
 hayColisionConAlguna jugador obstaculos = foldr paso False obstaculos
     where
         paso caja resto = solapan jugador caja || resto
-
