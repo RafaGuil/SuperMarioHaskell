@@ -8,7 +8,6 @@ import Test.QuickCheck
 
 -- Ejercicios 1,2,3
 
-
 -- Declaraciones de tipo
 
 -- Punto o Vector 2D
@@ -16,6 +15,12 @@ type Vector2 = (Double,Double)
 
 -- Cajas de colision
 type Caja = (Double,Double,Double,Double)
+
+-- Tarea 5
+-- Declaraciones de tipo
+-- Hemos creado un alias de tipos para que el código sea más legible y sepamos qué representa cada cosa.
+type Celda = Char     -- Cada casilla del nivel es un carácter individual ('#', 'M', '.', 'X'...)
+type Grid  = [String] -- El mapa completo es una lista de filas de texto (matriz 2D de caracteres)
 
 --Lado de colision
 data Lado = Arriba | Abajo | Izquierda | Derecha
@@ -122,18 +127,13 @@ list2Vector2 (x:y:_) = (x, y)
 -- SUBTAREA 5: PARSEO DEL NIVEL
 --------------------------------------------------------------------------------
 
--- APARTADO 1: Tipos sinónimo
--- Hemos creado un alias de tipos para que el código sea más legible y sepamos qué representa cada cosa.
-type Celda = Char     -- Cada casilla del nivel es un carácter individual ('#', 'M', '.', 'X'...)
-type Grid  = [String] -- El mapa completo es una lista de filas de texto (matriz 2D de caracteres)
-
--- APARTADO 2: Parseo del nivel
+-- APARTADO 1: Parseo del nivel
 -- Convierte la lista de líneas leídas del archivo de texto en nuestro tipo Grid.
 -- Como Grid ya está definido como [String], devolvemos las líneas tal cual.
 parsearNivel :: [String] -> Grid
 parsearNivel lineas = lineas
 
--- APARTADO 3: Funciones de clasificación con Pattern Matching
+-- APARTADO 2: Funciones de clasificación con Pattern Matching
 -- Hemos usado coincidencia de patrones sobre el carácter para saber qué hay en la celda:
 -- La primera línea comprueba el carácter concreto y la segunda (_) captura cualquier otro.
 
@@ -152,13 +152,13 @@ esVacio :: Celda -> Bool
 esVacio '.' = True -- Si es '.', la casilla esta vacia 
 esVacio _ = False -- Para el resto devuelve False
 
--- APARTADO 4: Detección de enemigos (reutilizando funciones anteriores)
+-- APARTADO 3: Detección de enemigos (reutilizando funciones anteriores)
 -- Un enemigo es cualquier carácter que no sea pared ('#'), ni meta ('M'), ni suelo vacío ('.').
 -- Reutilizamos las tres funciones anteriores para no repetir lógica.
 esEnemigo :: Celda -> Bool
 esEnemigo c = not (esSolido c || esMeta c || esVacio c)
 
--- APARTADO 5: Búsqueda de posiciones con listas por comprensión anidadas
+-- APARTADO 4: Búsqueda de posiciones con listas por comprensión anidadas
 
 -- Devuelve las coordenadas (fila, columna) donde aparece la meta 'M'.
 -- 1. zip [0..] grid asigna a cada fila su número de índice 'f' -> (0, "fila0"), (1, "fila1")...
@@ -318,6 +318,8 @@ prop_suma_asociativa a b c = sumaVectores (sumaVectores a b) c == sumaVectores a
 -- sino con un margen de tolerancia.
 
 
+
+
 -- ================================================== TAREA 2 ==============================================
 
 -- Bloque 1: Recursión
@@ -362,3 +364,43 @@ agruparPorCaracterAux xx@(x:xs) i aci ac
     | x == ' ' = []
     | not (null xs) && x == head xs = agruparPorCaracterAux xs (i+1) aci (ac+1)
     | otherwise = [(aci, ac+1, x)] ++ agruparPorCaracterAux xs (i+1) (i+1) 0
+    
+    
+-- Subtarea 3: Simulación de movimiento
+-- Función auxiliar calculaPaso:
+-- Calcula un nuevo estado sumando la velocidad a la posición actual y la gravedad a la velocidad
+calculaPaso :: Double -> (Double,Double) ->(Double, Double)
+calculaPaso gravedad (pos,vel) = (pos + vel, vel + gravedad)
+
+-- Función simularCaidaLibre:
+-- Establecemos el caso base y hacemos el caso genérico garantizando n+1 elementos
+simularCaidaLibre :: Int -> Double -> (Double, Double) -> [(Double, Double)]
+simularCaidaLibre 0 _ estado = [estado]
+simularCaidaLibre pasos gravedad estado = estado : simularCaidaLibre (pasos - 1) gravedad (calculaPaso gravedad estado)
+
+
+-- Subtarea 4: Recursión sobre dos listas a la vez
+-- Empareja las cabezas de cada lista de manera recursiva, en el momento que haya alguna lista vacía se detiene.
+zipPropio:: [a] -> [b] -> [(a,b)]
+zipPropio [] _ = []
+zipPropio _ [] = []
+zipPropio (x:xs) (y:ys) = (x,y) : zipPropio xs ys
+
+-- Subtarea 5: Recursión con descarte condicional
+-- Función auxiliar: esComentarioOVacia
+-- Evalúa si una cadena está vacía o si su primer caracter es un comentario
+esComentarioOVacia :: String -> Bool
+esComentarioOVacia "" = True
+esComentarioOVacia (';':_) = True
+esComentarioOVacia _ = False
+
+-- Función prepararLineas:
+-- Aplica trim para hacer una limpieza y filtra las listas que recibe como entrada.
+prepararLineas :: [String] -> [String]
+prepararLineas [] = []
+prepararLineas (linea:resto) 
+    | esComentarioOVacia lineaLimpia = prepararLineas resto
+    | otherwise = lineaLimpia : prepararLineas resto
+
+    where 
+        lineaLimpia = trim linea
