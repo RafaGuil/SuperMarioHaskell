@@ -1,7 +1,7 @@
 
 module Nivel where
 
--- import Test.QuickCheck
+import Test.QuickCheck
 
 
 -- Tarea 1
@@ -92,7 +92,9 @@ ladoColision (x1,y1,w1,h1) (x2,y2,w2,h2)
 -- Función: splitOn. Divide una cadena en trozos cada vez que aparece un carácter separador dado.
 -- DISCLAIMER: Al testearlo, cuidado con copiar y pegar del pdf que se copian mal las comillas del Char, poner esto: ''
 splitOn :: Char -> String -> [String]
-splitOn separador cadena = lines ([if c == separador then '\n' else c | c <- cadena])
+splitOn separador cadena
+    | notElem separador cadena = [cadena]
+    | otherwise = lines ([if c == separador then '\n' else c | c <- cadena])
 
 
 -- Función: trim. Elimina los espacios en blanco (espacios, tabuladores, saltos de línea) al principio y al final de una cadena.
@@ -287,8 +289,8 @@ prop_trim_idempotente s = trim (trim s) == trim s
 -- Uso ==> (y por eso devuelve Property) para descartar los casos en que
 -- sep sí aparece en s, porque ahí la propiedad no tiene que cumplirse.
 -- Incluye la cadena vacía: splitOn ',' "" debe dar [""] y no [].
--- prop_splitOn_sin_separador :: Char -> String -> Property
--- prop_splitOn_sin_separador sep s = not (elem sep s) ==> splitOn sep s == [s]
+prop_splitOn_sin_separador :: Char -> String -> Property
+prop_splitOn_sin_separador sep s = not (elem sep s) ==> splitOn sep s == [s]
 -- ghci> quickCheck prop_splitOn_sin_separador
 -- *** Failed! Falsified (after 1 test and 1 shrink):
 -- 'a'
@@ -316,11 +318,53 @@ prop_suma_asociativa a b c = sumaVectores (sumaVectores a b) c == sumaVectores a
 -- sino con un margen de tolerancia.
 
 
--- ================== Tarea 2 ================== --
+
+-- ================================================== TAREA 2 ==============================================
+
+-- Bloque 1: Recursión
+-- Ej1. Reimplementación recursiva de las consultas del nivel
+-- Función: posicionesMetaRec. Dado el nivel completo, devuelve la lista de posiciones (fila, columna) en las que aparece la
+-- meta. Mismo resultado que posicionesMeta de la Tarea 1, pero implementado con recursión explícita en vez de comprensión.
+posicionesMetaRec :: Grid -> [(Int, Int)]
+posicionesMetaRec grid = posicionesMetaRecAux grid 0
+
+posicionesMetaRecAux :: Grid -> Int -> [(Int, Int)]
+posicionesMetaRecAux [] _ = []
+posicionesMetaRecAux xx@(x:xs) ac
+    | xx == [""] = []
+    | any esMeta x = columnaRec x 0 ++ posicionesMetaRecAux xs (ac+1)
+    | otherwise = posicionesMetaRecAux xs (ac+1)
+        where
+            columnaRec [] _ = []
+            columnaRec (c:cs) acum = if esMeta c then (ac,acum) : columnaRec cs (acum+1) else columnaRec cs (acum+1)
+
+-- Función: posicionesEnemigosRec. Análoga a posicionesMetaRec, para las posiciones e identficadores de los enemigos.
+posicionesEnemigosRec :: Grid -> [(Int,Int,String)]
+posicionesEnemigosRec grid = posicionesEnemigosRecAux grid 0
+
+posicionesEnemigosRecAux :: Grid -> Int -> [(Int,Int,String)]
+posicionesEnemigosRecAux [] _ = []
+posicionesEnemigosRecAux xx@(x:xs) ac
+    | any esEnemigo x = columnaRec x 0 ++ posicionesEnemigosRecAux xs (ac+1)
+    | otherwise = posicionesEnemigosRecAux xs (ac+1)
+        where
+            columnaRec [] _ = []
+            columnaRec (c:cs) acum = if esEnemigo c then (ac, acum, [c]) : columnaRec cs (acum+1) else columnaRec cs (acum+1)
 
 
--- BLOQUE 1:
+-- Ej2. Generalización por recursión de agruparRachas
+-- Función: agruparPorCaracter. Recorre una fila y agrupa en tríos (columna de inicio, longitud, carácter) las rachas de caracteres consecutivos iguales.
+agruparPorCaracter :: String -> [(Int,Int,Char)]
+agruparPorCaracter s = agruparPorCaracterAux s 0 0 0
 
+agruparPorCaracterAux :: String -> Int -> Int -> Int -> [(Int,Int,Char)]
+agruparPorCaracterAux "" _ _ _ = []
+agruparPorCaracterAux xx@(x:xs) i aci ac
+    | x == ' ' = []
+    | not (null xs) && x == head xs = agruparPorCaracterAux xs (i+1) aci (ac+1)
+    | otherwise = [(aci, ac+1, x)] ++ agruparPorCaracterAux xs (i+1) (i+1) 0
+    
+    
 -- Subtarea 3: Simulación de movimiento
 -- Función auxiliar calculaPaso:
 -- Calcula un nuevo estado sumando la velocidad a la posición actual y la gravedad a la velocidad
@@ -359,6 +403,186 @@ prepararLineas (linea:resto)
 
     where 
         lineaLimpia = trim linea
+        
+        
+-- Bloque 2: Funciones de orden superior
+-- SUBTAREA 5: mapPropio y filterPropio (Bloque 2 - Orden Superior)
+-- Recibe una función transformadora (a -> b) y una lista [a], devolviendo la lista transformada [b]
+mapPropio :: (a -> b) -> [a] -> [b]
+mapPropio _ [] = []                    -- Caso base: si la lista está vacía, no hay nada que transformar
+mapPropio f (x:xs) = f x : mapPropio f xs  -- Caso recursivo: aplica 'f' a la cabeza 'x' y la une (:) con el resto procesado
+
+-- Recibe un predicado/condición (a -> Bool) y una lista [a], devolviendo los elementos que devuelven True
+filterPropio :: (a -> Bool) -> [a] -> [a]
+filterPropio _ [] = []                 -- Caso base: la lista vacía filtrada sigue siendo la lista vacía
+filterPropio p (x:xs)
+    | p x       = x : filterPropio p xs    -- Si la cabeza 'x' cumple la condición (p x == True), la conserva y sigue con 'xs'
+    | otherwise = filterPropio p xs        -- Si no la cumple, descarta 'x' y continúa procesando la cola 'xs'
+
+
+-- SUBTAREA 6: foldrPropio (Bloque 2 - Orden Superior)
+-- Plega la lista de derecha a izquierda asociando la función 'f' con un valor inicial/acumulador 'v'
+foldrPropio :: (a -> b -> b) -> b -> [a] -> b
+foldrPropio _ v [] = v                         -- Caso base: al llegar al final (lista vacía), devuelve el valor acumulado 'v'
+foldrPropio f v (x:xs) = f x (foldrPropio f v xs)  -- Caso recursivo: procesa primero la cola 'xs' y combina 'x' con ese resultado
+
+-- ---------------------------------------------------------------------
+-- TAREA 2 - Subtarea 6: foldlPropio (sin foldr/foldl)
+-- ---------------------------------------------------------------------
+
+-- (b -> a -> b) funcion que decide que operacion hace foldl
+-- b el valor inicial/ acumulador
+-- [a] la lista que se le aplica la funcion
+
+
+foldlPropio :: (b -> a -> b) -> b -> [a] -> b
+foldlPropio f v [] = v
+foldlPropio f v (x:xs) = foldlPropio f (f v x) xs 
+
+
+-- ---------------------------------------------------------------------
+-- TAREA 2 - Subtarea 7: hayColisionConAlguna (con foldr)
+-- ---------------------------------------------------------------------
+
+-- Caja representa a Mario
+-- [Caja] representa todos los obstaculos
+-- Bool devuelve True/False si colisiona con ALGUN obstaculo
+-- funcion solapan ya nos dice si colisiona
+
+{-
+    JUSTIFICACION: Usamos foldr porque nos interesa parar en cuanto el jugador Mario choque con un obstaculo.
+    Con (||) si el lado izquierdo es True, lo que venga despues que seria el resto no se va a calcular,
+    sin embargo si se usa foldl habría que recorrer siempre la lista entera aunque chocase con el primer obstaculo
+-}
+
+hayColisionConAlguna :: Caja -> [Caja] -> Bool
+hayColisionConAlguna jugador obstaculos = foldr paso False obstaculos
+    where
+        paso caja resto = solapan jugador caja || resto
+        
+        
+--Subtarea 7
+
+--Contar celdas que cumplen
+
+-- Cuenta cuántas celdas del nivel cumplen una condición.
+-- Uso foldl porque es una acumulación numérica: recorre la lista de izquierda a derecha
+-- llevando un contador, y no necesita preservar estructura ni cortocircuitar (foldr sería
+-- más natural al construir listas o al parar antes, como en hayColisionConAlguna).
+contarCeldasQueCumplen :: (Celda -> Bool) -> Grid -> Int
+contarCeldasQueCumplen condicion nivel = foldl sumaFila 0 nivel
+  where
+    -- Suma al total las celdas que cumplen la condición en una fila
+    sumaFila :: Int -> String -> Int
+    sumaFila acumulado fila = acumulado + contarEnFila fila
+
+    -- Cuenta cuántas celdas de una fila cumplen la condición
+    contarEnFila :: String -> Int
+    contarEnFila fila = foldl cuentaCelda 0 fila
+
+    -- Suma 1 al contador si la celda cumple la condición
+    cuentaCelda :: Int -> Celda -> Int
+    cuentaCelda acumulado celda
+      | condicion celda = acumulado + 1
+      | otherwise       = acumulado
+
+      
+--Bonus: Propiedades con QuickCheck
+
+-- mapPropio da lo mismo que map
+prop_mapPropio_equivale_map :: [Int] -> Bool
+prop_mapPropio_equivale_map xs = mapPropio (+1) xs == map (+1) xs
+
+-- filterPropio da lo mismo que filter
+prop_filterPropio_equivale_filter :: [Int] -> Bool
+prop_filterPropio_equivale_filter xs = filterPropio even xs == filter even xs
+
+-- foldrPropio da lo mismo que foldr (con (-) se nota si el orden es distinto)
+prop_foldrPropio_equivale_foldr :: [Int] -> Bool
+prop_foldrPropio_equivale_foldr xs = foldrPropio (-) 0 xs == foldr (-) 0 xs
+
+-- foldlPropio da lo mismo que foldl
+prop_foldlPropio_equivale_foldl :: [Int] -> Bool
+prop_foldlPropio_equivale_foldl xs = foldlPropio (-) 0 xs == foldl (-) 0 xs
+
+-- zipPropio da lo mismo que zip
+prop_zipPropio_equivale_zip :: [Int] -> [Char] -> Bool
+prop_zipPropio_equivale_zip xs ys = zipPropio xs ys == zip xs ys
+
+-- simularCaidaLibre devuelve siempre n + 1 estados (propiedad condicional, n >= 0)
+prop_simularCaidaLibre_longitud :: Int -> Property
+prop_simularCaidaLibre_longitud n = n >= 0 ==> length (simularCaidaLibre n (-1) (0,0)) == n + 1
+
+-- Nunca hay colisión contra una lista vacía de obstáculos
+prop_hayColisionConAlguna_lista_vacia :: Caja -> Bool
+prop_hayColisionConAlguna_lista_vacia caja = not (hayColisionConAlguna caja [])
+
+
+
+-- ================================================== TAREA 3 ==============================================
+
+-- SUBTAREA 3:
+
+-- Escribimos el type para las cajas de colisión (x, y, ancho, alto)
+type BoundingBox = (Double, Double, Double, Double)
+-- Representea una plataforma en el mundo con su caja de colisión
+data Plataforma = Plataforma BoundingBox deriving (Eq, Show)
+-- Representa la posición de la meta (final) del nivel
+data Meta = Meta { posMeta :: Vector2 } deriving (Eq, Show)
+-- Clase para unificar los objetos físicos del juego, devolviendo diferentes parámetros de los objetos
+class Objeto a where
+    posicion    :: a -> Vector2
+    boundingBox :: a -> BoundingBox
+    animar      :: Float -> a -> a
+    animar _ = id -- método con implementación por defecto
+
+-- Instancia de objeto plataforma para que devuelva su propia caja
+instance Objeto Plataforma where
+    posicion (Plataforma (x, y, w, h)) = (x + w/2, y + h/2)
+    boundingBox (Plataforma caja) = caja
+
+-- Instancia de objeto meta que tiene un tamaño fijo y está centrada en posMeta
+instance Objeto Meta where
+    posicion = posMeta
+    boundingBox m = let (x, y) = posMeta m in (x, y, 70, 80)
+
+-- Instancia de objeto jugador cuya caja es desplazada en x-30 para centrarla con respecto a su posición
+instance Objeto Jugador where
+    posicion = posJugador
+    boundingBox j = let (x, y) = posJugador j in (x - 30, y, 60, 90)
+-- 'animar' no se define aquí porque el movimiento del jugador se gestiona en 'actualizarMundo' con 'moverJugador'.
+
+-- Instancia de Objeto enemigo y su caja usa sus propias dimensiones
+instance Objeto Enemigo where
+    posicion = posEnemigo
+    boundingBox e = 
+        let (x, y) = posEnemigo e
+            (w, h) = dimEnemigo e
+        in (x - w/2, y - h/2, w, h)
+-- animar mueve al enemigo: posicion = posicion + (velocidad * dt)
+    animar dt e = e { posEnemigo = sumaVectores (posEnemigo e) (escalarVector (realToFrac dt) (velEnemigo e)) }
+
+-- Comprueba si dos cajas de colisión se pisan.
+-- Tienen el formato (x, y, ancho, alto)
+solapan :: BoundingBox -> BoundingBox -> Bool
+solapan (x1, y1, w1, h1) (x2, y2, w2, h2) =
+  let solapeX = x1 < x2 + w2 && x1 + w1 > x2
+      solapeY = y1 < y2 + h2 && y1 + h1 > y2
+  in solapeX && solapeY
+
+-- Comprueba la colisión entre dos objetos cualquiera del mundo
+colisionaCon :: (Objeto a, Objeto b) => a -> b -> Bool
+colisionaCon objA objB = solapan (boundingBox objA) (boundingBox objB)
+
+-- Comprueba si un objeto choca contra alguno de los elementos de una lista
+colisionaConAlguno :: (Objeto a, Objeto b) => a -> [b] -> Bool
+colisionaConAlguno obj = any (colisionaCon obj)
+
+
+
+
+
+
 
 
 
