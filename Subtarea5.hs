@@ -30,11 +30,11 @@ validarNivel nivel
 
 --------------------------------------------------------------------------------------------------------------------------
 
--- 1. separar nivel, limpiar el nivel para comprobar que esta completo
+-- 1. Separar la cabecera del mapa por la linea "---" o da error
 separar :: [String] -> Either ErrorNivel ([String], [String])
 separar lineas = case break (== "---") lineas of
-    (_, []) -> Left (FormatoInvalido "Falta separador '---'") -- devuelve lista vacia es que falta el separador
-    (_, ["_"]) -> Left (FormatoInvalido "No hay mapa ...") -- [_] solo hay un elemento en la lista que es el separador pero sin mapa
+    (_, []) -> Left (FormatoInvalido "falta el separador '---'") -- devuelve lista vacia es que falta el separador
+    (_, [_]) -> Left (FormatoInvalido "No hay mapa tras el separador ...") -- [_] solo hay un elemento en la lista que es el separador pero sin mapa
     (cabecera, _ : mapa) -> Right (cabecera, mapa) -- tenemos la priemra lista (cabecera) y la segunda que esta abierta _ primer elemento y el mapa
 
 {-
@@ -64,7 +64,7 @@ parsearFichero lineas = do
 
 --------------------------------------------------------------------------------------------------------------------------
 
--- Interpresa un fichero de nivel y comprueba que tiene exactamente una meta
+-- Interpreta un fichero de nivel y comprueba que tiene exactamente una meta
 parsearNivelCompleto :: [String] -> Either ErrorNivel NivelData
 parsearNivelCompleto lineas = parsearFichero lineas >>= validarNivel
 
@@ -75,3 +75,24 @@ parsearNivelCompleto lineas = parsearFichero lineas >>= validarNivel
 -- Interpreta y valida una lista de niveles devolviendo todos o el primer error 
 parsearNiveles :: [[String]] -> Either ErrorNivel [NivelData]
 parsearNiveles ficheros = traverse parsearNivelCompleto ficheros -- traverse y mapM hacen lo mismo
+
+
+-- Todas las posiciones (fila, columna) de una rejilla rectangular, en orden de filas.
+todasLasPosiciones :: Grid -> [(Int, Int)]
+todasLasPosiciones []         = []
+todasLasPosiciones g@(fila:_) = (,) <$> [0 .. length g - 1] <*> [0 .. length fila - 1]  -- fila <*> columna
+
+
+-- Lee un número entero de la línea que empieza por la clave, si existe y es válido. (Aux)
+leerNumero :: String -> [String] -> Maybe Int
+leerNumero clave ls = buscarClave clave ls >>= readMaybe
+
+-- Lee una partida guardada construyendo Partida en estilo aplicativo.
+parsearPartidaA :: [String] -> Maybe Partida
+parsearPartidaA ls = Partida <$> leerNumero "NIVEL: " ls <*> leerNumero "VIDAS: " ls <*> leerNumero "PUNTUACION: " ls
+
+
+
+-- Suma los puntos de una tabla de puntuaciones válida.
+puntuacionTotal :: [String] -> Maybe Int
+puntuacionTotal ls = sum . map puntos <$> parsearLeaderboard ls
