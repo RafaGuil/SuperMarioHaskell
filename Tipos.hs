@@ -1,5 +1,6 @@
 module Tipos 
     ( Vector2
+    , BoundingBox
     , Celda(..)
     , Grid
     , TipoEnemigo(..)
