@@ -27,7 +27,7 @@ validarNivel nivel
     where
         nMetas = length (filter (== META) (concat (gridNivel nivel)))
 
--- separar nivel
+-- 1. separar nivel, limpiar el nivel para comprobar que esta completo
 separar :: [String] -> Either ErrorNivel ([String], [String])
 separar lineas = case break (== "---") lineas of
     (_, []) -> Left (FormatoInvalido "Falta separador '---'") -- devuelve lista vacia es que falta el separador
@@ -38,8 +38,14 @@ separar lineas = case break (== "---") lineas of
 buscarClave devuelve Maybe y parsearFichero Either. Creo funcion aux. para convertir Maybe en Either
 -}
 
--- Busca una clave en la cabecera y si no esta devuelve el error de formato
+-- 2. Busca una clave en la cabecera y si no esta devuelve el error de formato
 buscarOError :: String -> [String] -> Either ErrorNivel String
 buscarOError clave cabecera = case buscarClave clave cabecera of
     Just valor -> Right valor
     Nothing -> Left (FormatoInvalido ("falta la clave '" ++ clave ++ "'"))
+
+-- 3. buscaOError para "FONDOS: " devuelve el texto "1,2,3" pero NivelData pide una lista de Integer [1,2,3], hay que tranformarlo
+leerFondos :: String -> Either ErrorNivel [Int]
+leerFondos texto = case mapM readMaybe (splitOn ',' texto) of
+    Just ns -> Right ns
+    Nothing -> Left (FormatoInvalido "FONDOS contiene valores no numericos")
