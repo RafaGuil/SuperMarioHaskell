@@ -17,6 +17,7 @@ data NivelData = NivelData
   , gridNivel   :: Grid
   } deriving (Eq, Show)
 
+--------------------------------------------------------------------------------------------------------------------------
 
 -- Comprueba que el nivel tiene exactamente una meta; si no, devuelve el error correspondiente.
 validarNivel :: NivelData -> Either ErrorNivel NivelData
@@ -26,6 +27,8 @@ validarNivel nivel
     | otherwise = Right nivel  
     where
         nMetas = length (filter (== META) (concat (gridNivel nivel)))
+
+--------------------------------------------------------------------------------------------------------------------------
 
 -- 1. separar nivel, limpiar el nivel para comprobar que esta completo
 separar :: [String] -> Either ErrorNivel ([String], [String])
@@ -49,3 +52,18 @@ leerFondos :: String -> Either ErrorNivel [Int]
 leerFondos texto = case mapM readMaybe (splitOn ',' texto) of
     Just ns -> Right ns
     Nothing -> Left (FormatoInvalido "FONDOS contiene valores no numericos")
+
+-- 4. Interpreta las lineas de un fichero de nivel o devuelve el primer error de formato
+parsearFichero :: [String] -> Either ErrorNivel NivelData
+parsearFichero lineas = do
+    (cabecera, mapa) <- separar lineas
+    nombre <- buscarOError "NOMBRE: " cabecera
+    textosFondos <- buscarOError "FONDOS: " cabecera -- textosFondos = "1,2
+    numeros <- leerFondos textosFondos              -- numeros = [1,2]
+    return (NivelData nombre numeros (parsearGrid mapa))
+
+--------------------------------------------------------------------------------------------------------------------------
+
+-- Interpresa un fichero de nivel y comprueba que tiene exactamente una meta
+parsearNivelCompleto :: [String] -> Either ErrorNivel NivelData
+parsearNivelCompleto lineas = parsearFichero lineas >>= validarNivel
