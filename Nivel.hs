@@ -2,6 +2,7 @@
 module Nivel where
 
 import Test.QuickCheck
+import Data.List (stripPrefix)
 
 
 -- Tarea 1
@@ -91,10 +92,10 @@ ladoColision (x1,y1,w1,h1) (x2,y2,w2,h2)
 -- Ej4. Utilidades de listas y cadenas
 -- Función: splitOn. Divide una cadena en trozos cada vez que aparece un carácter separador dado.
 -- DISCLAIMER: Al testearlo, cuidado con copiar y pegar del pdf que se copian mal las comillas del Char, poner esto: ''
-splitOn :: Char -> String -> [String]
-splitOn separador cadena
-    | notElem separador cadena = [cadena]
-    | otherwise = lines ([if c == separador then '\n' else c | c <- cadena])
+--splitOn :: Char -> String -> [String]
+--splitOn separador cadena
+--    | notElem separador cadena = [cadena]
+--    | otherwise = lines ([if c == separador then '\n' else c | c <- cadena])
 
 
 -- Función: trim. Elimina los espacios en blanco (espacios, tabuladores, saltos de línea) al principio y al final de una cadena.
@@ -639,6 +640,22 @@ colisionaCon objA objB = solapan (boundingBox objA) (boundingBox objB)
 colisionaConAlguno :: (Objeto a, Objeto b) => a -> [b] -> Bool
 colisionaConAlguno obj = any (colisionaCon obj)
 
+-- Subtarea 4:
+
+-- Divide una cadena utilizando un carácter separador dado (Hemos tenido que comentar el splitOn anteriormente hecho).
+splitOn :: Char -> String -> [String]
+splitOn c s = case break (== c) s of
+  (a, [])  -> [a]
+  (a, _:b) -> a : splitOn c b
+
+-- Busca la clave y devuelve el resto de la primera línea que encaje usando stripPrefix.
+buscarClave :: String -> [String] -> Maybe String
+buscarClave _ [] = Nothing
+buscarClave clave (x:xs) = case stripPrefix clave x of
+    Just resto -> Just resto
+    Nothing    -> buscarClave clave xs
+
+-- El resto de la subtarea 4 está en el archivo "Partida.hs"
 
 
 
