@@ -6,7 +6,11 @@ module Partida
     , parsearEntrada
     , parsearLeaderboard
     , mejoresPuntuaciones
+      -- * Bonus
+    , parsearPartidaA
+    , puntuacionTotal
     ) where
+-- No se exporta la auxiliar leerNumero.
 
 import Nivel (buscarClave, splitOn)
 import Text.Read (readMaybe)
@@ -38,12 +42,12 @@ serializarPartida p =
 parsearPartida :: [String] -> Maybe Partida
 parsearPartida lineas = do
     nivelStr  <- buscarClave "NIVEL: " lineas
-    nivel     <- readMaybe nivelStr
+    nivelN    <- readMaybe nivelStr
     vidasStr  <- buscarClave "VIDAS: " lineas
-    vidas     <- readMaybe vidasStr
+    vidasN    <- readMaybe vidasStr
     puntosStr <- buscarClave "PUNTUACION: " lineas
-    puntos    <- readMaybe puntosStr
-    return (Partida nivel vidas puntos)
+    puntosN   <- readMaybe puntosStr
+    return (Partida nivelN vidasN puntosN)
 
 -- Convierte una línea de texto con formato "nombre;puntos" en una Entrada validando campos.
 parsearEntrada :: String -> Maybe Entrada
@@ -60,3 +64,18 @@ parsearLeaderboard lineas = mapM parsearEntrada (filter (not . null) lineas)
 -- Devuelve las 'n' mejores puntuaciones ordenadas de mayor a menor utilizando sortOn y Down.
 mejoresPuntuaciones :: Int -> [Entrada] -> [Entrada]
 mejoresPuntuaciones n entradas = take n (sortOn (Down . puntos) entradas)
+
+--------------------------------------------------------------------------------------------------------------------------
+-- Bonus
+
+-- Lee un número entero de la línea que empieza por la clave, si existe y es válido. (Aux)
+leerNumero :: String -> [String] -> Maybe Int
+leerNumero clave ls = buscarClave clave ls >>= readMaybe
+
+-- Lee una partida guardada construyendo Partida en estilo aplicativo.
+parsearPartidaA :: [String] -> Maybe Partida
+parsearPartidaA ls = Partida <$> leerNumero "NIVEL: " ls <*> leerNumero "VIDAS: " ls <*> leerNumero "PUNTUACION: " ls
+
+-- Suma los puntos de una tabla de puntuaciones válida.
+puntuacionTotal :: [String] -> Maybe Int
+puntuacionTotal ls = sum . map puntos <$> parsearLeaderboard ls
