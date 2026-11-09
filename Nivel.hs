@@ -318,6 +318,7 @@ prop_suma_asociativa a b c = sumaVectores (sumaVectores a b) c == sumaVectores a
 -- sino con un margen de tolerancia.
 
 
+<<<<<<< HEAD
 
 -- ================================================== TAREA 2 ==============================================
 
@@ -356,6 +357,48 @@ posicionesEnemigosRecAux xx@(x:xs) ac
 -- Función: agruparPorCaracter. Recorre una fila y agrupa en tríos (columna de inicio, longitud, carácter) las rachas de caracteres consecutivos iguales.
 agruparPorCaracter :: String -> [(Int,Int,Char)]
 agruparPorCaracter s = agruparPorCaracterAux s 0 0 0
+
+=======
+
+
+-- ================================================== TAREA 2 ==============================================
+
+-- Bloque 1: Recursión
+-- Ej1. Reimplementación recursiva de las consultas del nivel
+-- Función: posicionesMetaRec. Dado el nivel completo, devuelve la lista de posiciones (fila, columna) en las que aparece la
+-- meta. Mismo resultado que posicionesMeta de la Tarea 1, pero implementado con recursión explícita en vez de comprensión.
+posicionesMetaRec :: Grid -> [(Int, Int)]
+posicionesMetaRec grid = posicionesMetaRecAux grid 0
+
+posicionesMetaRecAux :: Grid -> Int -> [(Int, Int)]
+posicionesMetaRecAux [] _ = []
+posicionesMetaRecAux xx@(x:xs) ac
+    | xx == [""] = []
+    | any esMeta x = [(ac,columnaRec x 0)]
+    | otherwise = posicionesMetaRecAux xs (ac+1)
+        where
+            columnaRec (c:cs) acum = if esMeta c then acum else columnaRec cs (acum+1)
+
+-- Función: posicionesEnemigosRec. Análoga a posicionesMetaRec, para las posiciones e identficadores de los enemigos.
+posicionesEnemigosRec :: Grid -> [(Int,Int,String)]
+posicionesEnemigosRec grid = posicionesEnemigosRecAux grid 0
+
+posicionesEnemigosRecAux :: Grid -> Int -> [(Int,Int,String)]
+posicionesEnemigosRecAux [] _ = []
+posicionesEnemigosRecAux xx@(x:xs) ac
+    | x == "" = []
+    | any esEnemigo x = [(ac, columnaRec x 0, [elemRec x])] ++ posicionesEnemigosRecAux xs (ac+1)
+    | otherwise = posicionesEnemigosRecAux xs (ac+1)
+        where
+            columnaRec (c:cs) acum = if esEnemigo c then acum else columnaRec cs (acum+1)
+            elemRec (c:cs) = if esEnemigo c then c else elemRec cs
+
+
+-- Ej2. Generalización por recursión de agruparRachas
+-- Función: agruparPorCaracter. Recorre una fila y agrupa en tríos (columna de inicio, longitud, carácter) las rachas de caracteres consecutivos iguales.
+agruparPorCaracter :: String -> [(Int,Int,Char)]
+agruparPorCaracter s = agruparPorCaracterAux s 0 0 0
+
 
 agruparPorCaracterAux :: String -> Int -> Int -> Int -> [(Int,Int,Char)]
 agruparPorCaracterAux "" _ _ _ = []
@@ -403,6 +446,7 @@ prepararLineas (linea:resto)
 
     where 
         lineaLimpia = trim linea
+
         
         
 -- Bloque 2: Funciones de orden superior
@@ -521,6 +565,23 @@ prop_hayColisionConAlguna_lista_vacia caja = not (hayColisionConAlguna caja [])
 
 -- ================================================== TAREA 3 ==============================================
 
+-- Tipo para representar vectores 2D (coordenadas o velocidades)
+type Vector2 = (Double, Double)
+
+-- Tipos de enemigos disponibles
+data TipoEnemigo = Patrulla | Perseguidor deriving (Eq, Show)
+
+-- Registro para el Jugador
+data Jugador = Jugador
+  { posJugador :: Vector2, velJugador :: Vector2, vidas :: Int, puntuacion :: Int
+  } deriving (Eq, Show)
+
+-- Registro para el Enemigo
+data Enemigo = Enemigo
+  { idEnemigo :: String, posEnemigo :: Vector2, velEnemigo :: Vector2, dimEnemigo :: Vector2, tipoEnemigo :: TipoEnemigo
+  } deriving (Eq, Show)
+
+
 -- SUBTAREA 3:
 
 -- Escribimos el type para las cajas de colisión (x, y, ancho, alto)
@@ -577,7 +638,6 @@ colisionaCon objA objB = solapan (boundingBox objA) (boundingBox objB)
 -- Comprueba si un objeto choca contra alguno de los elementos de una lista
 colisionaConAlguno :: (Objeto a, Objeto b) => a -> [b] -> Bool
 colisionaConAlguno obj = any (colisionaCon obj)
-
 
 
 
