@@ -16,3 +16,13 @@ data NivelData = NivelData
   , fondos      :: [Int]
   , gridNivel   :: Grid
   } deriving (Eq, Show)
+
+
+-- Comprueba que el nivel tiene exactamente una meta; si no, devuelve el error correspondiente.
+validarNivel :: NivelData -> Either ErrorNivel NivelData
+validarNivel nivel 
+    | nMetas == 0 = Left NivelSinMeta
+    | nMetas > 1 = Left (NivelConVariasMetas nMetas)
+    | otherwise = Right nivel  
+    where
+        nMetas = length (filter (== META) (concat (gridNivel nivel)))
