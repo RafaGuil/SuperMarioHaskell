@@ -3,9 +3,11 @@ module Partida
     , Entrada(..)
     , serializarPartida
     , parsearPartida
+    , parsearPartidaA
     , parsearEntrada
     , parsearLeaderboard
     , mejoresPuntuaciones
+    , puntuacionTotal
     ) where
 
 import Nivel (buscarClave, splitOn)

@@ -8,7 +8,6 @@ module Objeto
     ) where
 
 import Tipos (Vector2, BoundingBox, sumaVectores, escalarVector, Enemigo(..))
-import Jugador (Jugador, posJugador)
 
 -- Representa una plataforma estática en el mundo mediante su caja de colisión.
 data Plataforma = Plataforma BoundingBox deriving (Eq, Show)
@@ -35,11 +34,6 @@ instance Objeto Plataforma where
 instance Objeto Meta where
     posicion = posMeta
     boundingBox m = let (x, y) = posMeta m in (x, y, 70, 80)
-
--- Instancia de Objeto para Jugador: su caja es de 60x90 desplazada -30 en X para centrarla.
-instance Objeto Jugador where
-    posicion = posJugador
-    boundingBox j = let (x, y) = posJugador j in (x - 30, y, 60, 90)
 
 -- Instancia de Objeto para Enemigo: su caja usa sus dimensiones y 'animar' actualiza su posición con su velocidad.
 instance Objeto Enemigo where

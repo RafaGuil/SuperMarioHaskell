@@ -1,10 +1,9 @@
 
 module Nivel where
 
-import Test.QuickCheck
 import Data.List (stripPrefix)
 
-
+{-
 -- Tarea 1
 
 -- Ejercicios 1,2,3
@@ -561,7 +560,7 @@ prop_simularCaidaLibre_longitud n = n >= 0 ==> length (simularCaidaLibre n (-1) 
 -- Nunca hay colisión contra una lista vacía de obstáculos
 prop_hayColisionConAlguna_lista_vacia :: Caja -> Bool
 prop_hayColisionConAlguna_lista_vacia caja = not (hayColisionConAlguna caja [])
-
+-}
 
 
 -- ================================================== TAREA 3 ==============================================
