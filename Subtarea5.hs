@@ -26,3 +26,10 @@ validarNivel nivel
     | otherwise = Right nivel  
     where
         nMetas = length (filter (== META) (concat (gridNivel nivel)))
+
+-- separar nivel
+separar :: [String] -> Either ErrorNivel ([String], [String])
+separar lineas = case break (== "---") lineas of
+    (_, []) -> Left (FormatoInvalido "Falta separador '---'") -- devuelve lista vacia es que falta el separador
+    (_, ["_"]) -> Left (FormatoInvalido "No hay mapa ...") -- [_] solo hay un elemento en la lista que es el separador pero sin mapa
+    (cabecera, _ : mapa) -> Right (cabecera, mapa) -- tenemos la priemra lista (cabecera) y la segunda que esta abierta _ primer elemento y el mapa
