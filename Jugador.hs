@@ -1,5 +1,9 @@
 module Jugador 
-    ( Jugador(posJugador, velJugador, vidas, puntuacion)
+    ( Jugador
+    , posJugador
+    , velJugador
+    , vidas
+    , puntuacion
     , crearJugador
     , perderVida
     , sumarPuntos
@@ -8,7 +12,8 @@ module Jugador
     , estadoSiguiente
     ) where
 
-import Tipos (Vector2, EstadoJuego(..), sumaVectores, escalarVector)
+import Tipos (Vector2, BoundingBox, EstadoJuego(..), sumaVectores, escalarVector)
+import Objeto (Objeto(..))
 
 data Jugador = Jugador
     { posJugador :: Vector2
@@ -44,3 +49,9 @@ estadoSiguiente j recibioDaño tocaMeta
     | recibioDaño = PierdeVida
     | tocaMeta = NivelCompletado
     | otherwise = Jugando
+
+instance Objeto Jugador where
+    posicion j = posJugador j
+    boundingBox j = 
+        let (x, y) = posJugador j
+        in (x - 30, y, 60, 90)
