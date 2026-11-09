@@ -67,3 +67,11 @@ parsearFichero lineas = do
 -- Interpresa un fichero de nivel y comprueba que tiene exactamente una meta
 parsearNivelCompleto :: [String] -> Either ErrorNivel NivelData
 parsearNivelCompleto lineas = parsearFichero lineas >>= validarNivel
+
+--------------------------------------------------------------------------------------------------------------------------
+
+-- Bonus
+
+-- Interpreta y valida una lista de niveles devolviendo todos o el primer error 
+parsearNiveles :: [[String]] -> Either ErrorNivel [NivelData]
+parsearNiveles ficheros = traverse parsearNivelCompleto ficheros -- traverse y mapM hacen lo mismo
