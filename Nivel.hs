@@ -9,16 +9,23 @@ module Nivel
     , parsearFichero
     , validarNivel
     , parsearNivelCompleto
+      -- * Del mapa a los objetos (Subtarea 6A)
+    , tamCelda
+    , posicionCelda
+    , gridAPlataformas
+    , metasDesdeGrid
+    , enemigosDesdeGrid
       -- * Bonus
     , parsearNiveles
     , todasLasPosiciones
     ) where
--- No se exportan las auxiliares separar, buscarOError ni leerFondos.
+-- No se exportan las auxiliares separar, buscarOError, leerFondos ni celdasConPosicion.
 
 import Data.List (stripPrefix)
 import Text.Read (readMaybe)
 
-import Tipos (Grid, esMeta, parsearGrid)
+import Objeto (Enemigo(..), Meta(..), Plataforma(..))
+import Tipos (Celda(..), Grid, TipoEnemigo(..), Vector2, esMeta, parsearGrid, sumaVectores)
 
 -- Errores posibles al interpretar un nivel (dado en el enunciado).
 data ErrorNivel
@@ -97,6 +104,42 @@ parsearFichero lineas = do
 -- Interpreta un fichero de nivel y comprueba que tiene exactamente una meta
 parsearNivelCompleto :: [String] -> Either ErrorNivel NivelData
 parsearNivelCompleto lineas = parsearFichero lineas >>= validarNivel
+
+--------------------------------------------------------------------------------------------------------------------------
+-- Subtarea 6A: del mapa a los objetos
+
+-- Lado (en unidades del mundo) de cada celda cuadrada del mapa.
+tamCelda :: Float
+tamCelda = 40
+
+-- Esquina inferior izquierda de la celda (fila i desde arriba, columna j) en un mapa de 'total' filas.
+posicionCelda :: Int -> Int -> Int -> Vector2
+posicionCelda total i j = (fromIntegral j * tamCelda, fromIntegral (total - 1 - i) * tamCelda)
+
+-- Cada celda del mapa junto con la esquina de su posición en el mundo (auxiliar, no se exporta).
+celdasConPosicion :: Grid -> [(Vector2, Celda)]
+celdasConPosicion g =
+  [ (posicionCelda (length g) i j, c) | (i, fila) <- zip [0 ..] g, (j, c) <- zip [0 ..] fila ]
+
+-- Una plataforma de tamCelda x tamCelda por cada celda sólida del mapa.
+gridAPlataformas :: Grid -> [Plataforma]
+gridAPlataformas g = [ Plataforma (x, y, tamCelda, tamCelda) | ((x, y), Solido) <- celdasConPosicion g ]
+
+-- Una meta en la esquina de cada celda META del mapa.
+metasDesdeGrid :: Grid -> [Meta]
+metasDesdeGrid g = [ Meta esquina | (esquina, META) <- celdasConPosicion g ]
+
+-- Un enemigo patrulla centrado en cada celda de inicio de enemigo, con su identificador.
+enemigosDesdeGrid :: Grid -> [Enemigo]
+enemigosDesdeGrid g =
+  [ Enemigo
+      { idEnemigo   = ident
+      , posEnemigo  = sumaVectores esquina (tamCelda / 2, tamCelda / 2)
+      , velEnemigo  = (-40, 0)
+      , dimEnemigo  = (tamCelda, tamCelda)
+      , tipoEnemigo = Patrulla
+      }
+  | (esquina, InicioEnemigo ident) <- celdasConPosicion g ]
 
 --------------------------------------------------------------------------------------------------------------------------
 -- Bonus
