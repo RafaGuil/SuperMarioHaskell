@@ -4,7 +4,6 @@ module Tipos
     , Celda(..)
     , Grid
     , TipoEnemigo(..)
-    , Enemigo(..)
     , EstadoJuego(..)
     , parsearCelda
     , parsearGrid
@@ -34,15 +33,6 @@ data Celda = Solido
 
 -- | Comportamientos o dinámicas posibles para los enemigos.
 data TipoEnemigo = Patrulla | Perseguidor deriving (Eq, Show)
-
--- | Registro que define la estructura y propiedades de un enemigo.
-data Enemigo = Enemigo
-    { idEnemigo :: String
-    , posEnemigo :: Vector2
-    , velEnemigo :: Vector2
-    , dimEnemigo :: Vector2
-    , tipoEnemigo :: TipoEnemigo
-    } deriving (Eq, Show)
 
 -- | Estados posibles del bucle del juego.
 data EstadoJuego = Jugando | PierdeVida | GameOver | NivelCompletado deriving (Eq, Show)

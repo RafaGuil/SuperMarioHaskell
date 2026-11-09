@@ -1,19 +1,29 @@
 module Objeto 
     ( Plataforma(..)
     , Meta(..)
+    , Enemigo(..)
     , Objeto(..)
     , solapan
     , colisionaCon
     , colisionaConAlguno
     ) where
 
-import Tipos (Vector2, BoundingBox, sumaVectores, escalarVector, Enemigo(..))
+import Tipos (Vector2, BoundingBox, TipoEnemigo, sumaVectores, escalarVector)
 
 -- Representa una plataforma estática en el mundo mediante su caja de colisión.
 data Plataforma = Plataforma BoundingBox deriving (Eq, Show)
 
--- Representa la meta del nivel indicando su posición central.
+-- Representa la meta del nivel indicando la esquina inferior izquierda de su caja.
 data Meta = Meta { posMeta :: Vector2 } deriving (Eq, Show)
+
+-- Registro que define la estructura y propiedades de un enemigo (posición = centro de su caja).
+data Enemigo = Enemigo
+    { idEnemigo   :: String
+    , posEnemigo  :: Vector2
+    , velEnemigo  :: Vector2
+    , dimEnemigo  :: Vector2
+    , tipoEnemigo :: TipoEnemigo
+    } deriving (Eq, Show)
 
 -- Clase de tipos que unifica los objetos físicos con presencia en el mundo del juego.
 class Objeto a where
@@ -30,7 +40,7 @@ instance Objeto Plataforma where
     posicion (Plataforma (x, y, w, h)) = (x + w/2, y + h/2)
     boundingBox (Plataforma caja) = caja
 
--- Instancia de Objeto para Meta: su caja tiene un tamaño fijo de 70x80 centrada en su posición.
+-- Instancia de Objeto para Meta: su caja tiene un tamaño fijo de 70x80 a partir de su posición.
 instance Objeto Meta where
     posicion = posMeta
     boundingBox m = let (x, y) = posMeta m in (x, y, 70, 80)
