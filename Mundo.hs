@@ -4,34 +4,35 @@ module Mundo
   , mundoInicial, actualizarMundo, manejarEvento
   ) where
 
-import Graphics.Gloss.Interface.Pure.Game (Event(..), Key(..), KeyState(..), SpecialKey(..))
+import qualified Data.Map as Map
+import Graphics.Gloss.Interface.IO.Game (Event(..), Key(..), KeyState(..), SpecialKey(..))
 
-import Jugador (Jugador, conVelocidad, crearJugador, moverJugador, perderVida, estadoSiguiente, velJugador)
-import Nivel (NivelData(..), enemigosDesdeGrid, gridAPlataformas, metasDesdeGrid)
+import Jugador (Jugador, conVelocidad, moverJugador, perderVida, estadoSiguiente, velJugador)
+import Nivel (NivelData(..))
 import Objeto (Enemigo, Meta, Plataforma, animar, colisionaConAlguno)
+import qualified Pila as P
+import Sprites (Sprites)
 import Tipos (EstadoJuego(..), Vector2)
 
 -- Todo lo que existe en el mundo en un instante.
 data Mundo = Mundo
   { jugadorM     :: Jugador
-  , enemigosM    :: [Enemigo]
+  , enemigosM    :: Map.Map Int Enemigo
   , plataformasM :: [Plataforma]
   , metasM       :: [Meta]
+  , tiempoM      :: Float
   , estadoM      :: EstadoJuego
+  , esperaM      :: Maybe Float       -- instante en que se perdió la última vida
+  , nivelNum     :: Int
   , nivelM       :: NivelData
+  , spritesM     :: Sprites
+  , historialM   :: P.Pila Vector2    -- posiciones anteriores (para deshacer)
+  , registradaM  :: Bool              -- ¿ya se anotó la puntuación final?
   } deriving (Eq, Show)
 
 -- Mundo de partida para un nivel dado.
 mundoInicial :: NivelData -> Mundo
-mundoInicial nd = Mundo
-  { jugadorM     = crearJugador (60, 120)
-  , enemigosM    = enemigosDesdeGrid g
-  , plataformasM = gridAPlataformas g
-  , metasM       = metasDesdeGrid g
-  , estadoM      = Jugando
-  , nivelM       = nd
-  }
-  where g = gridNivel nd
+mundoInicial = undefined
 
 -- Avanza dt segundos: mueve jugador y enemigos, detecta daño y meta, y actualiza el estado.
 actualizarMundo :: Float -> Mundo -> Mundo
@@ -40,8 +41,8 @@ actualizarMundo dt m
   | otherwise = m { jugadorM = jugador', enemigosM = enemigos', estadoM = estadoSiguiente jugador' dano toca }
   where
     movido     = moverJugador dt (jugadorM m)
-    enemigos'  = map (animar dt) (enemigosM m)
-    dano       = colisionaConAlguno movido enemigos'
+    enemigos'  = Map.map (animar dt) (enemigosM m)
+    dano       = colisionaConAlguno movido (Map.elems enemigos')
     toca       = colisionaConAlguno movido (metasM m)
     jugador'   = if dano then perderVida movido else movido
 

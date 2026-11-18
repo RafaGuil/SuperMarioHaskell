@@ -1,6 +1,7 @@
 module Nivel
     ( -- * Tipos de un nivel
       ErrorNivel(..)
+    , DatosEnemigo(..)
     , NivelData(..)
       -- * Utilidades de texto (Subtarea 4, reutilizadas por Partida)
     , splitOn
@@ -14,31 +15,50 @@ module Nivel
     , posicionCelda
     , gridAPlataformas
     , metasDesdeGrid
-    , enemigosDesdeGrid
+    , enemigosDesdeMatriz
       -- * Bonus
     , parsearNiveles
     , todasLasPosiciones
     ) where
 -- No se exportan las auxiliares separar, buscarOError, leerFondos ni celdasConPosicion.
 
+import Data.Array (elems)
 import Data.List (stripPrefix)
+import qualified Data.Map as Map
 import Text.Read (readMaybe)
 
+import Matriz (Matriz)
 import Objeto (Enemigo(..), Meta(..), Plataforma(..))
-import Tipos (Celda(..), Grid, TipoEnemigo(..), Vector2, esMeta, parsearGrid, sumaVectores)
+import Tipos (BoundingBox, Celda(..), Grid, Vector2, esMeta)
 
 -- Errores posibles al interpretar un nivel (dado en el enunciado).
 data ErrorNivel
   = FormatoInvalido String
   | NivelSinMeta
   | NivelConVariasMetas Int
+  | EnemigoDesconocido String
+  | ErrorFichero String
   deriving (Eq, Show)
+
+-- Lo declarado en la cabecera.
+data DatosEnemigo = DatosEnemigo
+  { idDatos      :: String
+  , tipoSprite   :: String
+  , periodoDatos :: Int
+  , mortal       :: Bool
+  , tamEnemigo   :: Vector2
+  , offsetCaja   :: BoundingBox
+  , patronDatos  :: [Vector2]
+  } deriving (Eq, Show)
 
 -- Datos de un nivel ya interpretado (dado en el enunciado).
 data NivelData = NivelData
   { nombreNivel :: String
   , fondos      :: [Int]
-  , gridNivel   :: Grid
+  , matrizNivel :: Matriz
+  , metaOffset  :: Vector2
+  , enemigosData :: Map.Map String DatosEnemigo
+  , tiposEnemigo :: [String]
   } deriving (Eq, Show)
 
 --------------------------------------------------------------------------------------------------------------------------
@@ -67,7 +87,7 @@ validarNivel nivel
     | nMetas > 1 = Left (NivelConVariasMetas nMetas)
     | otherwise = Right nivel
     where
-        nMetas = length (filter esMeta (concat (gridNivel nivel)))
+        nMetas = length (filter esMeta (elems (matrizNivel nivel)))
 
 -- 1. Separar la cabecera del mapa por la linea "---" o da error
 separar :: [String] -> Either ErrorNivel ([String], [String])
@@ -92,14 +112,11 @@ leerFondos texto = case mapM readMaybe (splitOn ',' texto) of
     Just ns -> Right ns
     Nothing -> Left (FormatoInvalido "FONDOS contiene valores no numericos")
 
--- 4. Interpreta las lineas de un fichero de nivel o devuelve el primer error de formato
+-- Como en la Tarea 3, pero ahora lee también META OFFSET: x,y, TIPOS DE ENEMIGO: t1, t2 y todas las líneas ENEMIGO k:.
+-- Errores (FormatoInvalido): falta una clave obligatoria, FONDOS o META OFFSET no válidos, o un ENEMIGO k mal formado
+-- (mensaje "ENEMIGO k mal formado").
 parsearFichero :: [String] -> Either ErrorNivel NivelData
-parsearFichero lineas = do
-    (cabecera, mapa) <- separar lineas
-    nombre <- buscarOError "NOMBRE: " cabecera
-    textosFondos <- buscarOError "FONDOS: " cabecera -- textosFondos = "1,2
-    numeros <- leerFondos textosFondos              -- numeros = [1,2]
-    return (NivelData nombre numeros (parsearGrid mapa))
+parsearFichero = undefined
 
 -- Interpreta un fichero de nivel y comprueba que tiene exactamente una meta
 parsearNivelCompleto :: [String] -> Either ErrorNivel NivelData
@@ -129,17 +146,11 @@ gridAPlataformas g = [ Plataforma (x, y, tamCelda, tamCelda) | ((x, y), Solido) 
 metasDesdeGrid :: Grid -> [Meta]
 metasDesdeGrid g = [ Meta esquina | (esquina, META) <- celdasConPosicion g ]
 
--- Un enemigo patrulla centrado en cada celda de inicio de enemigo, con su identificador.
-enemigosDesdeGrid :: Grid -> [Enemigo]
-enemigosDesdeGrid g =
-  [ Enemigo
-      { idEnemigo   = ident
-      , posEnemigo  = sumaVectores esquina (tamCelda / 2, tamCelda / 2)
-      , velEnemigo  = (-40, 0)
-      , dimEnemigo  = (tamCelda, tamCelda)
-      , tipoEnemigo = Patrulla
-      }
-  | (esquina, InicioEnemigo ident) <- celdasConPosicion g ]
+-- Un Enemigo por cada celda InicioEnemigo id cuyo id esté en datos, numerados desde 0 en el orden del mapa.
+-- Su centro está en (x + anchoBaldosa / 2, y + alto / 2) (alto = alto de su sprite); su velocidad inicial es la
+-- primera del patrón (o (0,0) si es vacío); contador e indicePatron a 0; tiempoMuerte a Nothing; el resto, de sus datos.
+enemigosDesdeMatriz :: Map.Map String DatosEnemigo -> Matriz -> Map.Map Int Enemigo
+enemigosDesdeMatriz = undefined
 
 --------------------------------------------------------------------------------------------------------------------------
 -- Bonus

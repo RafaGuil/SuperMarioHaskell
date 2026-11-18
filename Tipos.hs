@@ -5,6 +5,10 @@ module Tipos
     , Grid
     , TipoEnemigo(..)
     , EstadoJuego(..)
+    , Accion(..)
+    , anchoBaldosa
+    , altoBaldosa
+    , yBaseNivel
     , parsearCelda
     , parsearGrid
     , celdaAChar
@@ -36,6 +40,20 @@ data TipoEnemigo = Patrulla | Perseguidor deriving (Eq, Show)
 
 -- | Estados posibles del bucle del juego.
 data EstadoJuego = Jugando | PierdeVida | GameOver | NivelCompletado deriving (Eq, Show)
+
+data Accion = Caminar | SaltarSubiendo | SaltarCayendo | Agachar | Parado deriving (Eq, Ord, Show)
+
+-- Cada celda mide anchoBaldosa × altoBaldosa = 140 × 40.
+anchoBaldosa :: Float
+anchoBaldosa = 140
+
+-- Cada celda mide anchoBaldosa × altoBaldosa = 140 × 40.
+altoBaldosa :: Float
+altoBaldosa = 40
+
+-- La fila inferior del mapa tiene su borde inferior en yBaseNivel = -225.
+yBaseNivel :: Float
+yBaseNivel = -225
 
 -- | Convierte un carácter individual del mapa al tipo Celda correspondiente.
 parsearCelda :: Char -> Celda
