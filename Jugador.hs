@@ -4,6 +4,9 @@ module Jugador
     , velJugador
     , vidas
     , puntuacion
+    , faseAnim
+    , mirandoDcha
+    , agachado
     , crearJugador
     , perderVida
     , sumarPuntos
@@ -21,6 +24,9 @@ data Jugador = Jugador
     , velJugador :: Vector2
     , vidas      :: Int
     , puntuacion :: Int
+    , faseAnim   :: Float     -- elige el fotograma de la animación
+    , mirandoDcha :: Bool
+    , agachado   :: Bool
     } deriving (Eq, Show)
 
 -- | Crea un jugador inicial en la posición dada con velocidad nula, 3 vidas y 0 puntos.
@@ -30,6 +36,9 @@ crearJugador pos = Jugador
     , velJugador = (0.0, 0.0)
     , vidas = 3
     , puntuacion = 0
+    , faseAnim = 0
+    , mirandoDcha = True
+    , agachado = False
     }
 
 -- | Reduce en 1 las vidas del jugador mediante actualización de registro, asegurando que nunca bajen de 0.

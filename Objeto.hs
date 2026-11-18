@@ -2,19 +2,20 @@ module Objeto
     ( Plataforma(..)
     , Meta(..)
     , Enemigo(..)
+    , LadoColision(..)
     , Objeto(..)
     , solapan
     , colisionaCon
     , colisionaConAlguno
     ) where
 
-import Tipos (Vector2, BoundingBox, TipoEnemigo, sumaVectores, escalarVector)
+import Tipos (Vector2, BoundingBox, sumaVectores, escalarVector)
 
 -- Representa una plataforma estática en el mundo mediante su caja de colisión.
-data Plataforma = Plataforma BoundingBox deriving (Eq, Show)
+newtype Plataforma = Plataforma BoundingBox deriving (Eq, Show)
 
 -- Representa la meta del nivel indicando la esquina inferior izquierda de su caja.
-data Meta = Meta { posMeta :: Vector2 } deriving (Eq, Show)
+newtype Meta = Meta { posMeta :: Vector2 } deriving (Eq, Show)
 
 -- Registro que define la estructura y propiedades de un enemigo (posición = centro de su caja).
 data Enemigo = Enemigo
@@ -22,8 +23,17 @@ data Enemigo = Enemigo
     , posEnemigo  :: Vector2
     , velEnemigo  :: Vector2
     , dimEnemigo  :: Vector2
-    , tipoEnemigo :: TipoEnemigo
+    , hitOffset   :: BoundingBox
+    , patronMov   :: [Vector2]
+    , periodoMov  :: Int
+    , contador    :: Int          -- estado del patrón de movimiento
+    , indicePatron :: Int
+    , tiempoMuerte :: Maybe Float
+    , puedeMorir  :: Bool
     } deriving (Eq, Show)
+
+-- El lado de la segunda caja por el que choca la primera.
+data LadoColision = Arriba | Abajo | Izquierda | Derecha deriving (Eq, Show)
 
 -- Clase de tipos que unifica los objetos físicos con presencia en el mundo del juego.
 class Objeto a where

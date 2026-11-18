@@ -3,6 +3,7 @@ module Render
   ( dibujarObjeto, dibujarHUD, mensajeEstado, dibujarMundo
   ) where
 
+import qualified Data.Map as Map
 import Graphics.Gloss
 
 -- Jugador es un tipo abstracto: importamos el nombre del tipo sin cualificar y sus selectores
@@ -39,7 +40,7 @@ dibujarMundo m = Pictures ([escena, dibujarHUD j] ++ mensaje)
     escena   = translate (-px) (-py) $ Pictures $
                  map (dibujarObjeto (greyN 0.5)) (plataformasM m)
               ++ map (dibujarObjeto green) (metasM m)
-              ++ map (dibujarObjeto red) (enemigosM m)
+              ++ map (dibujarObjeto red) (Map.elems (enemigosM m))
               ++ [dibujarObjeto blue j]
     mensaje  = maybe [] (\msg -> [translate (-250) 0 (scale 0.3 0.3 (color black (text msg)))])
                         (mensajeEstado (estadoM m))
