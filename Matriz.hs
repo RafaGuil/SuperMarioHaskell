@@ -56,3 +56,8 @@ vecinos m (i, j) = filter libre [(i - 1, j), (i + 1, j), (i, j - 1), (i, j + 1)]
 -- Posiciones de las celdas que cumplen una propiedad
 posicionesDe :: (Celda -> Bool) -> Matriz -> [Pos]
 posicionesDe prop m = [ p | (p, c) <- assocs m, prop c ] -- Si cumple prop c, se hace la tupla con (posicion, tipoCelda) y se devuelve la posicion (fila, columna) 
+
+-- Número de celdas sólidas de cada fila.
+conteoPorFila :: Matriz -> Array Int Int
+conteoPorFila m = accumArray (+) 0 (f0, f1) [ (i, 1) | ((i, _), c) <- assocs m, esSolido c ] -- Se devuelve una lista de tuplas con (Fila, num solidos)
+  where ((f0, _), (f1, _)) = bounds m
