@@ -2,7 +2,7 @@ module Matriz
   ( Pos
   , Matriz
   , gridAMatriz
---   , matrizAGrid
+  , matrizAGrid
 --   , dimensiones
 --   , celdaEn
 --   , vecinos
@@ -29,4 +29,10 @@ gridAMatriz g = listArray ((0,0),(f-1,c-1)) (concatMap completar g) -- Se usa lo
     f = length g -- Numero de listas del grid
     c = maximum (0 : map length g) -- Longitud de la lista más grande
     completar fila = take c (fila ++ repeat Vacio) -- Rellena con Vacio hasta medir c
+
+-- Convierte una matriz a grid
+matrizAGrid :: Matriz -> Grid
+matrizAGrid m = [[ m ! (i, j) | j <- [c0 .. c1] ] | i <- [f0 .. f1]] -- Se mete en una lista lo que hay en (0,0), luego en (0,1)...
+  where 
+    ((f0, c0), (f1, c1)) = bounds m -- bounds m devuelve esto: ((filaInicial, colInicial), (filaFinal, colFinal))
 
