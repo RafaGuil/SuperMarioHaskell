@@ -47,3 +47,12 @@ celdaEn :: Matriz -> Pos -> Maybe Celda
 celdaEn m p
   | inRange (bounds m) p = Just (m ! p)
   | otherwise            = Nothing
+
+-- Se miran los vecinos que no son solidos
+vecinos :: Matriz -> Pos -> [Pos]
+vecinos m (i, j) = filter libre [(i - 1, j), (i + 1, j), (i, j - 1), (i, j + 1)]
+  where libre p = inRange (bounds m) p && not (esSolido (m ! p))
+
+-- Posiciones de las celdas que cumplen una propiedad
+posicionesDe :: (Celda -> Bool) -> Matriz -> [Pos]
+posicionesDe prop m = [ p | (p, c) <- assocs m, prop c ] -- Si cumple prop c, se hace la tupla con (posicion, tipoCelda) y se devuelve la posicion (fila, columna) 
