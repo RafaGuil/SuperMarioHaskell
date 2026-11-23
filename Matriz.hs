@@ -3,8 +3,8 @@ module Matriz
   , Matriz
   , gridAMatriz
   , matrizAGrid
---   , dimensiones
---   , celdaEn
+  , dimensiones
+  , celdaEn
 --   , vecinos
 --   , posicionesDe
 --   , conteoPorFila
@@ -36,3 +36,14 @@ matrizAGrid m = [[ m ! (i, j) | j <- [c0 .. c1] ] | i <- [f0 .. f1]] -- Se mete 
   where 
     ((f0, c0), (f1, c1)) = bounds m -- bounds m devuelve esto: ((filaInicial, colInicial), (filaFinal, colFinal))
 
+-- Dimensiones de la matriz
+dimensiones :: Matriz -> (Int, Int)
+dimensiones m = (f1+1, c1+1)
+  where
+    ((_, _), (f1, c1)) = bounds m -- bounds m devuelve esto: ((filaInicial, colInicial), (filaFinal, colFinal))
+
+-- Celda en tal posicion
+celdaEn :: Matriz -> Pos -> Maybe Celda
+celdaEn m p
+  | inRange (bounds m) p = Just (m ! p)
+  | otherwise            = Nothing
