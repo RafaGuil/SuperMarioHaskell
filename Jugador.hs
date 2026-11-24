@@ -13,9 +13,10 @@ module Jugador
     , conVelocidad
     , moverJugador
     , estadoSiguiente
+    , elegirAccion
     ) where
 
-import Tipos (Vector2, EstadoJuego(..), sumaVectores, escalarVector)
+import Tipos (Vector2, EstadoJuego(..), Accion(..), sumaVectores, escalarVector)
 import Objeto (Objeto(..))
 
 -- | Registro que modela el estado físico y de progresión del jugador.
@@ -65,6 +66,17 @@ estadoSiguiente j recibioDaño tocaMeta
     | recibioDaño = PierdeVida
     | tocaMeta = NivelCompletado
     | otherwise = Jugando
+
+-- | Acción del jugador según su velocidad y si está agachado (en este orden de prioridad).
+elegirAccion :: Jugador -> Accion
+elegirAccion j
+    | vy > 1     = SaltarSubiendo
+    | vy < 0     = SaltarCayendo
+    | agachado j = Agachar
+    | vx == 0    = Parado
+    | otherwise  = Caminar
+    where
+        (vx, vy) = velJugador j
 
 -- | Instancia de la clase Objeto para el Jugador, definiendo su posición y caja de colisión.
 instance Objeto Jugador where

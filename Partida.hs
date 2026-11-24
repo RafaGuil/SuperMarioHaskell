@@ -2,6 +2,7 @@ module Partida
     ( Partida(..)
     , Entrada(..)
     , serializarPartida
+    , serializarEntrada
     , parsearPartida
     , parsearEntrada
     , parsearLeaderboard
@@ -48,6 +49,10 @@ parsearPartida lineas = do
     puntosStr <- buscarClave "PUNTUACION: " lineas
     puntosN   <- readMaybe puntosStr
     return (Partida nivelN vidasN puntosN)
+
+-- Convierte una entrada en una línea con formato "nombre;puntos".
+serializarEntrada :: Entrada -> String
+serializarEntrada e = nombreJugador e ++ ";" ++ show (puntos e)
 
 -- Convierte una línea de texto con formato "nombre;puntos" en una Entrada validando campos.
 parsearEntrada :: String -> Maybe Entrada
