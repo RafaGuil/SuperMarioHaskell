@@ -1,80 +1,128 @@
-module Objeto 
-    ( Plataforma(..)
-    , Meta(..)
-    , Enemigo(..)
-    , LadoColision(..)
-    , Objeto(..)
-    , solapan
-    , colisionaCon
-    , colisionaConAlguno
-    ) where
+module Objeto
+  ( LadoColision(..)
+  , Objeto(..)
+  , Plataforma(..)
+  , Meta(..)
+  , Enemigo(..)
+  , solapan
+  , colisionaCon
+  , colisionaConAlguno
+  , ladoColision
+  , vivo
+  , enemigosVivos
+  ) where
 
 import Tipos (Vector2, BoundingBox, sumaVectores, escalarVector)
+import qualified Data.Map as Map
+import Data.Maybe (isNothing)
 
--- Representa una plataforma estática en el mundo mediante su caja de colisión.
-newtype Plataforma = Plataforma BoundingBox deriving (Eq, Show)
+-- Lado por el que colisiona la entidad A con la entidad B
+data LadoColision = Abajo | Arriba | Izquierda | Derecha
+  deriving (Eq, Show, Ord)
 
--- Representa la meta del nivel indicando la esquina inferior izquierda de su caja.
-newtype Meta = Meta { posMeta :: Vector2 } deriving (Eq, Show)
-
--- Registro que define la estructura y propiedades de un enemigo (posición = centro de su caja).
-data Enemigo = Enemigo
-    { idEnemigo   :: String
-    , posEnemigo  :: Vector2
-    , velEnemigo  :: Vector2
-    , dimEnemigo  :: Vector2
-    , hitOffset   :: BoundingBox
-    , patronMov   :: [Vector2]
-    , periodoMov  :: Int
-    , contador    :: Int          -- estado del patrón de movimiento
-    , indicePatron :: Int
-    , tiempoMuerte :: Maybe Float
-    , puedeMorir  :: Bool
-    } deriving (Eq, Show)
-
--- El lado de la segunda caja por el que choca la primera.
-data LadoColision = Arriba | Abajo | Izquierda | Derecha deriving (Eq, Show)
-
--- Clase de tipos que unifica los objetos físicos con presencia en el mundo del juego.
+-- Clase de tipos para los objetos físicos del mundo
 class Objeto a where
-    -- | Devuelve la posición central del objeto.
-    posicion    :: a -> Vector2
-    -- | Devuelve la caja de colisión del objeto.
-    boundingBox :: a -> BoundingBox
-    -- | Actualiza el estado del objeto en función del tiempo transcurrido (por defecto no hace nada).
-    animar      :: Float -> a -> a
-    animar _ = id
+  posicion :: a -> Vector2
+  boundingBox :: a -> BoundingBox
+  animar :: Float -> a -> a
+  animar _ x = x
 
--- Instancia de Objeto para Plataforma: calcula su centro geométrico a partir de la caja.
+-- Entidades del Nivel
+
+-- Plataforma sólida del mapa (su caja AABB en la esquina inferior izquierda)
+newtype Plataforma = Plataforma BoundingBox
+  deriving (Eq, Show)
+
 instance Objeto Plataforma where
-    posicion (Plataforma (x, y, w, h)) = (x + w/2, y + h/2)
-    boundingBox (Plataforma caja) = caja
+  posicion (Plataforma (x, y, _, _)) = (x, y)
+  boundingBox (Plataforma box) = box
 
--- Instancia de Objeto para Meta: su caja tiene un tamaño fijo de 70x80 a partir de su posición.
+-- Meta del nivel (caja de 70x80 con origen en la esquina inferior izquierda posMeta)
+newtype Meta = Meta { posMeta :: Vector2 }
+  deriving (Eq, Show)
+
 instance Objeto Meta where
-    posicion = posMeta
-    boundingBox m = let (x, y) = posMeta m in (x, y, 70, 80)
+  posicion (Meta pos) = pos
+  boundingBox (Meta (x, y)) = (x, y, 70.0, 80.0)
 
--- Instancia de Objeto para Enemigo: su caja usa sus dimensiones y 'animar' actualiza su posición con su velocidad.
+-- Enemigo del juego
+data Enemigo = Enemigo
+  { idEnemigo    :: String
+  , posEnemigo   :: Vector2      -- Centro del enemigo
+  , velEnemigo   :: Vector2
+  , dimEnemigo   :: Vector2      -- (ancho, alto) del sprite
+  , hitOffset    :: BoundingBox  -- (ox, oy, ow, oh) en fracciones del sprite
+  , patronMov    :: [Vector2]    -- Lista cíclica de velocidades
+  , periodoMov   :: Int          -- Fotogramas entre cambios de velocidad
+  , contador     :: Int          -- Contador de fotogramas
+  , indicePatron :: Int          -- Índice en el patrón
+  , tiempoMuerte :: Maybe Float  -- Just t si murió en el instante t
+  , puedeMorir   :: Bool
+  } deriving (Eq, Show)
+
 instance Objeto Enemigo where
-    posicion = posEnemigo
-    boundingBox e = 
-        let (x, y) = posEnemigo e
-            (w, h) = dimEnemigo e
-        in (x - w/2, y - h/2, w, h)
-    animar dt e = e { posEnemigo = sumaVectores (posEnemigo e) (escalarVector dt (velEnemigo e)) }
+  posicion = posEnemigo
 
--- Comprueba si dos cajas de colisión se solapan simultáneamente en ambos ejes.
+  boundingBox e = (x - w / 2.0 + w * ox, y - h / 2.0 + h * oy, w * ow, h * oh)
+    where
+      (x, y) = posEnemigo e
+      (w, h) = dimEnemigo e
+      (ox, oy, ow, oh) = hitOffset e
+
+  -- Anima el avance del enemigo según el tiempo y su patrón
+  animar dt e
+    | null (patronMov e) = e
+    | contador e >= periodoMov e =
+        let sigIdx   = (indicePatron e + 1) `mod` length (patronMov e)
+            nuevaVel = patronMov e !! sigIdx
+            nuevaPos = posEnemigo e `sumaVectores` escalarVector dt nuevaVel
+        in e { posEnemigo   = nuevaPos
+             , velEnemigo   = nuevaVel
+             , contador     = 0
+             , indicePatron = sigIdx
+             }
+    | otherwise =
+        let nuevaPos = posEnemigo e `sumaVectores` escalarVector dt (velEnemigo e)
+        in e { posEnemigo = nuevaPos, contador = contador e + 1 }
+
+-- Colisiones y Utilidades
+
+- Comprueba el solapamiento estricto de dos cajas
 solapan :: BoundingBox -> BoundingBox -> Bool
 solapan (x1, y1, w1, h1) (x2, y2, w2, h2) =
-  let solapeX = x1 < x2 + w2 && x1 + w1 > x2
-      solapeY = y1 < y2 + h2 && y2 < y1 + h1
-  in solapeX && solapeY
+  x1 < x2 + w2 && x1 + w1 > x2 && y1 < y2 + h2 && y1 + h1 > y2
 
--- Comprueba la colisión entre dos objetos cualesquiera del mundo usando sus cajas de colisión.
+-- Indica si dos objetos colisionan
 colisionaCon :: (Objeto a, Objeto b) => a -> b -> Bool
-colisionaCon objA objB = solapan (boundingBox objA) (boundingBox objB)
+colisionaCon a b = solapan (boundingBox a) (boundingBox b)
 
--- Comprueba si un objeto colisiona con al menos un elemento de una lista de objetos de otro tipo.
+- Comprueba si un objeto colisiona con alguno de una lista
 colisionaConAlguno :: (Objeto a, Objeto b) => a -> [b] -> Bool
 colisionaConAlguno obj = any (colisionaCon obj)
+
+- Lado de B por el que choca A (en empates: Abajo, Arriba, Izquierda, Derecha)
+ladoColision :: BoundingBox -> BoundingBox -> LadoColision
+ladoColision (xA, yA, wA, hA) (xB, yB, wB, hB) =
+  let penetracionAbajo     = (yA + hA) - yB
+      penetracionArriba    = (yB + hB) - yA
+      penetracionIzquierda = (xA + wA) - xB
+      penetracionDerecha   = (xB + wB) - xA
+      opciones =
+        [ (penetracionAbajo, Abajo)
+        , (penetracionArriba, Arriba)
+        , (penetracionIzquierda, Izquierda)
+        , (penetracionDerecha, Derecha)
+        ]
+  in snd $ foldl1 minOpcion opciones
+  where
+    minOpcion (d1, l1) (d2, l2)
+      | d1 <= d2  = (d1, l1)
+      | otherwise = (d2, l2)
+
+- Un enemigo está vivo si no puede morir o si no tiene tiempoMuerte
+vivo :: Enemigo -> Bool
+vivo e = not (puedeMorir e) || isNothing (tiempoMuerte e)
+
+- Filtra un Map conservando solo los enemigos vivos
+enemigosVivos :: Map.Map Int Enemigo -> Map.Map Int Enemigo
+enemigosVivos = Map.filter vivo
